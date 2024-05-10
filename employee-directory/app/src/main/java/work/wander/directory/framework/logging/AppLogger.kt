@@ -3,7 +3,7 @@ package work.wander.directory.framework.logging
 import android.util.Log
 import javax.inject.Inject
 
-interface ExampleLogger {
+interface AppLogger {
     fun log(priority: Int = Log.DEBUG, message: String)
     fun log(priority: Int = Log.DEBUG, throwable: Throwable, message: String)
     fun debug(message: String) = log(Log.DEBUG, message)
@@ -16,7 +16,7 @@ interface ExampleLogger {
     fun error(throwable: Throwable, message: String) = log(Log.ERROR, throwable, message)
 }
 
-class SystemExampleLogger @Inject constructor() : ExampleLogger {
+class SystemAppLogger @Inject constructor() : AppLogger {
     override fun log(priority: Int, message: String) {
         Log.println(priority, getTagFromCaller(), message)
     }

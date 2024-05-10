@@ -72,6 +72,7 @@ dependencies {
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.ui.text.google.fonts)
     ksp(libs.androidx.room.compiler)
 
     // Dagger
@@ -105,6 +106,17 @@ dependencies {
     implementation(libs.okhttp.core)
     implementation(libs.okhttp.logging)
     testImplementation(libs.okhttp.mockwebserver)
+
+    // Moshi
+    implementation(libs.moshi.core)
+    implementation(libs.moshi.kotlin)
+
+    // Picasso
+    implementation(libs.picasso)
+
+    // Material2
+    implementation(libs.androidx.material2.core)
+    implementation(libs.androidx.material2.android)
 
     // Testing Core
     testImplementation(libs.junit)

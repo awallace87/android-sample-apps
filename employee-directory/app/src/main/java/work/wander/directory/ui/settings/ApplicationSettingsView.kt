@@ -1,14 +1,18 @@
 package work.wander.directory.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -17,13 +21,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import work.wander.directory.data.employee.remote.EmployeeDataUrl
 import work.wander.directory.proto.settings.ApplicationSettings
-import work.wander.directory.ui.theme.ExampleTheme
+import work.wander.directory.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +48,7 @@ fun ApplicationSettingsView(
                 title = {
                     Text(
                         text = "Settings",
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.displayMedium,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                     )
@@ -84,6 +92,77 @@ fun ApplicationSettingsView(
                     },
                 )
             }
+            if (applicationSettings.isDeveloperModeEnabled) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Developer Mode Settings",
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Developer Mode is enabled. Additional settings are available.",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            val currentEmployeeDataUrl = EmployeeDataUrl.fromUrl(applicationSettings.activeEmployeeDataUrl)
+                            val isSelectingEmployeeDataUrl = remember { mutableStateOf(false) }
+                            Text(
+                                text = "Active Directory URL",
+                                modifier = Modifier
+                                    .weight(0.33f)
+                                    .padding(start = 8.dp),
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = currentEmployeeDataUrl.description,
+                                modifier = Modifier
+                                    .weight(0.66f)
+                                    .padding(end = 8.dp)
+                                    .clickable {
+                                        isSelectingEmployeeDataUrl.value = true
+                                    },
+                            )
+                            DropdownMenu(
+                                modifier = Modifier.weight(0.66f),
+                                expanded = isSelectingEmployeeDataUrl.value,
+                                onDismissRequest = {
+                                    isSelectingEmployeeDataUrl.value = false
+                                },) {
+                                EmployeeDataUrl.entries.forEach { employeeDataUrl ->
+                                    DropdownMenuItem(
+                                        text = { Text(employeeDataUrl.description) },
+                                        onClick = {
+                                            isSelectingEmployeeDataUrl.value = false
+                                           onSettingsUpdated(
+                                                applicationSettings.toBuilder()
+                                                    .setActiveEmployeeDataUrl(employeeDataUrl.url)
+                                                    .build()
+                                            )
+                                        },
+                                    )
+                                }
+
+                            }
+
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -91,9 +170,25 @@ fun ApplicationSettingsView(
 @Preview
 @Composable
 private fun ApplicationSettingsViewPreview() {
-    ExampleTheme {
+    val applicationSettings = ApplicationSettings.getDefaultInstance().toBuilder()
+        .setIsDeveloperModeEnabled(true)
+        .build()
+    AppTheme {
         ApplicationSettingsView(
-            applicationSettings = ApplicationSettings.getDefaultInstance(),
+            applicationSettings = applicationSettings,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ApplicationSettingsViewDarkPreview() {
+    val applicationSettings = ApplicationSettings.getDefaultInstance().toBuilder()
+        .setIsDeveloperModeEnabled(true)
+        .build()
+    AppTheme(darkTheme = true) {
+        ApplicationSettingsView(
+            applicationSettings = applicationSettings,
         )
     }
 }

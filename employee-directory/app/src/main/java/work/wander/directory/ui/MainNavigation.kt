@@ -8,48 +8,56 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import work.wander.directory.ui.demo.RoomDemoView
-import work.wander.directory.ui.demo.RoomDemoViewModel
+import work.wander.directory.ui.directory.DirectoryScreenView
+import work.wander.directory.ui.directory.DirectoryScreenViewModel
+import work.wander.directory.ui.employee.EmployeeScreenView
+import work.wander.directory.ui.employee.EmployeeScreenViewModel
 import work.wander.directory.ui.settings.ApplicationSettingsView
 import work.wander.directory.ui.settings.ApplicationSettingsViewModel
 
 @Composable
 fun MainNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "room") {
-        composable("room") {
-            val roomDemoViewModel: RoomDemoViewModel = hiltViewModel<RoomDemoViewModel>()
-            val demoEntities = roomDemoViewModel.getAllEntities().collectAsState().value
-            RoomDemoView(
-                modifier = Modifier.fillMaxSize(),
-                demoDataEntities = demoEntities,
-                onEntityCreate = { newEntityData ->
-                    roomDemoViewModel.addNewEntity(newEntityData)
+    NavHost(navController = navController, startDestination = "directory") {
+        composable("directory") {
+            val directoryScreenViewModel = hiltViewModel<DirectoryScreenViewModel>()
+
+            val uiState = directoryScreenViewModel.uiState.collectAsState()
+            DirectoryScreenView(
+                uiState = uiState.value,
+                onRefreshRequested = { directoryScreenViewModel.fetchEmployees() },
+                isRefreshingData = directoryScreenViewModel.isRefreshing,
+                onEmployeeSelected = {
+                    navController.navigate("employee/$it")
                 },
-                onEntityEdit = { updatedId, updatedData ->
-                    roomDemoViewModel.updateEntity(updatedId, updatedData)
-                },
-                onEntityDelete = { entityToDelete ->
-                    roomDemoViewModel.deleteEntity(entityToDelete)
-                },
-                onSettingsSelected = {
-                    navController.navigate("settings")
-                },
+                refreshOnStart = true,
+                onSettingsSelected = { navController.navigate("settings") }
+            )
+        }
+        composable("employee/{employeeId}") { backStackEntry ->
+            val employeeId = backStackEntry.arguments?.getString("employeeId") ?: ""
+            val employeeScreenViewModel = hiltViewModel<EmployeeScreenViewModel>()
+
+            employeeScreenViewModel.setEmployeeId(employeeId)
+
+            val uiState = employeeScreenViewModel.uiState.collectAsState()
+
+            EmployeeScreenView(
+                uiState = uiState.value,
+                onSettingsSelected = { navController.navigate("settings") },
+                onBackSelected = { navController.popBackStack() },
             )
         }
         composable("settings") {
-            val applicationSettingsViewModel: ApplicationSettingsViewModel =
-                hiltViewModel<ApplicationSettingsViewModel>()
+            val applicationSettingsViewModel = hiltViewModel<ApplicationSettingsViewModel>()
             val applicationSettings =
-                applicationSettingsViewModel.getApplicationSettings().collectAsState().value
+                applicationSettingsViewModel.getApplicationSettings().collectAsState()
             ApplicationSettingsView(
-                applicationSettings = applicationSettings,
-                onSettingsUpdated = { updatedSettings ->
-                    applicationSettingsViewModel.updateApplicationSettings(updatedSettings)
-                },
-                onBackSelected = {
-                    navController.popBackStack()
-                })
+                applicationSettings = applicationSettings.value,
+                modifier = Modifier.fillMaxSize(),
+                onSettingsUpdated = { applicationSettingsViewModel.updateApplicationSettings(it) },
+                onBackSelected = { navController.popBackStack() },
+            )
         }
     }
 }

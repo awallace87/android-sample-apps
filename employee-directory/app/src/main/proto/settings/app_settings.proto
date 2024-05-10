@@ -5,4 +5,6 @@ option java_multiple_files = true;
 
 message ApplicationSettings {
   bool isDeveloperModeEnabled = 1;
+
+  string activeEmployeeDataUrl = 2;
 }
