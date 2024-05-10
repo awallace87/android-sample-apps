@@ -9,8 +9,18 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import work.wander.directory.proto.settings.ApplicationSettings
+import javax.inject.Qualifier
 import javax.inject.Singleton
+
+/**
+ * Annotation class for marking dependencies as being used for application settings data.
+ */
+@Retention(AnnotationRetention.BINARY)
+@Qualifier
+annotation class ForApplicationSettingsData
 
 /**
  * Dagger module for providing dependencies related to the application settings data store.
@@ -31,6 +41,11 @@ class ApplicationSettingsDataModule {
             }
         )
     }
+
+    @Provides
+    @Singleton
+    @ForApplicationSettingsData
+    fun provideCoroutineDispatcher() : CoroutineDispatcher = Dispatchers.IO
 }
 
 @Module

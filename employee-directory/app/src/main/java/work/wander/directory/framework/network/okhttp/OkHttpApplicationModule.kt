@@ -8,11 +8,14 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import work.wander.directory.framework.logging.AppLogger
 import java.time.Duration
+import javax.inject.Qualifier
 import javax.inject.Singleton
 
 /**
  * Annotation for OkHttp logging dependencies.
  **/
+@Retention(AnnotationRetention.BINARY)
+@Qualifier
 annotation class ForOkHttpLogging
 
 /**

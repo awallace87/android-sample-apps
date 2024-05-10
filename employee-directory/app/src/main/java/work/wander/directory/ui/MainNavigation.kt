@@ -57,10 +57,13 @@ fun MainNavigation() {
             val applicationSettingsViewModel = hiltViewModel<ApplicationSettingsViewModel>()
             val applicationSettings =
                 applicationSettingsViewModel.getApplicationSettings().collectAsState()
+
             ApplicationSettingsView(
                 applicationSettings = applicationSettings.value,
+                numSavedEmployeeState = applicationSettingsViewModel.getNumSavedEmployees().collectAsState(),
                 modifier = Modifier.fillMaxSize(),
                 onSettingsUpdated = { applicationSettingsViewModel.updateApplicationSettings(it) },
+                onClearLocalDataSelected = { applicationSettingsViewModel.clearLocalData() },
                 onBackSelected = { navController.popBackStack() },
             )
         }

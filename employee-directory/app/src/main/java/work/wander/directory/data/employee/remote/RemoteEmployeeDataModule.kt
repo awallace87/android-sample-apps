@@ -10,12 +10,15 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import javax.inject.Qualifier
 import javax.inject.Singleton
 
 
 /**
  * Annotation class for marking dependencies as being used for employee data requests.
  */
+@Retention(AnnotationRetention.BINARY)
+@Qualifier
 annotation class ForEmployeeRequest
 
 /**

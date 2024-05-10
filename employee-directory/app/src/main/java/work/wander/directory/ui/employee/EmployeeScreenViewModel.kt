@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import work.wander.directory.data.employee.room.EmployeeDatabase
-import work.wander.directory.data.employee.room.EmployeeEntity
 import java.time.Duration
 import javax.inject.Inject
 
@@ -29,7 +28,7 @@ class EmployeeScreenViewModel @Inject constructor(
             }
             val employee = employees.find { it.id == employeeId }
             if (employee != null) {
-                return@combine EmployeeScreenUiState.Success(employee)
+                return@combine EmployeeScreenUiState.Success(EmployeeDetailsData.fromEmployeeEntity(employee))
             } else {
                 return@combine EmployeeScreenUiState.Error("Employee not found")
             }
@@ -50,6 +49,6 @@ class EmployeeScreenViewModel @Inject constructor(
 sealed class EmployeeScreenUiState {
     data object Initial : EmployeeScreenUiState()
     data class Loading(val employeeId: String) : EmployeeScreenUiState()
-    data class Success(val employee: EmployeeEntity) : EmployeeScreenUiState()
+    data class Success(val employee: EmployeeDetailsData) : EmployeeScreenUiState()
     data class Error(val message: String) : EmployeeScreenUiState()
 }

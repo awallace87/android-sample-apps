@@ -32,4 +32,7 @@ interface EmployeeDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertEmployees(employees: List<EmployeeEntity>)
 
+    @Query("DELETE FROM employees")
+    fun deleteAllEmployees()
+
 }

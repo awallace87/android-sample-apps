@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import work.wander.directory.data.employee.remote.ForEmployeeRequest
 import work.wander.directory.data.employee.remote.RemoteEmployeeDataSource
 import work.wander.directory.data.employee.room.EmployeeDatabase
 import work.wander.directory.framework.logging.AppLogger
@@ -25,7 +27,7 @@ class DirectoryScreenViewModel @Inject constructor(
     private val remoteEmployeeDataSource: RemoteEmployeeDataSource,
     private val employeeDatabase: EmployeeDatabase,
     private val appLogger: AppLogger,
-    // TODO inject dispatcher
+    @ForEmployeeRequest private val coroutineDispatcher: CoroutineDispatcher,
 )
 : ViewModel() {
 
@@ -48,7 +50,7 @@ class DirectoryScreenViewModel @Inject constructor(
 
     val isRefreshing: State<Boolean> = isRefreshingEmployeeData
     fun fetchEmployees() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(coroutineDispatcher) {
             isRefreshingEmployeeData.value = true
             val remoteFetchResult = remoteEmployeeDataSource.refreshDataFromRemote()
             if (remoteFetchResult is RemoteEmployeeDataSource.EmployeeDataResponse.Success) {
