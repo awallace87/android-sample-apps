@@ -10,6 +10,12 @@ import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
 import work.wander.directory.ui.theme.AppTheme
 
+/**
+ * Main activity for the application.
+ *
+ * This activity sets the content view to the MainNavigation composable function.
+
+ */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

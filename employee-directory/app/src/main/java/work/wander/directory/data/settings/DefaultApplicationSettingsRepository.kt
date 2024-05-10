@@ -5,6 +5,9 @@ import kotlinx.coroutines.flow.Flow
 import work.wander.directory.proto.settings.ApplicationSettings
 import javax.inject.Inject
 
+/**
+ * Default implementation of [ApplicationSettingsRepository].
+ */
 class DefaultApplicationSettingsRepository @Inject constructor(
     private val applicationSettingsDataStore: DataStore<ApplicationSettings>
 ) : ApplicationSettingsRepository {

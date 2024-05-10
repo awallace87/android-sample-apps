@@ -15,6 +15,11 @@ import work.wander.directory.ui.employee.EmployeeScreenViewModel
 import work.wander.directory.ui.settings.ApplicationSettingsView
 import work.wander.directory.ui.settings.ApplicationSettingsViewModel
 
+/**
+ * Main navigation for the app.
+ *
+ * This composable function sets up the navigation for the app.
+ */
 @Composable
 fun MainNavigation() {
     val navController = rememberNavController()

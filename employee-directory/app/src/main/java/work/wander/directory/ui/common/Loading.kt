@@ -10,7 +10,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 
 /**
- * Composable function to display a full screen loading screen.
+ * Composable function to display an infinite loading animation.
+ *
+ * @param modifier Modifier to be applied to the layout.
+ * @param contentDescription The content description for the loading indicator.
  */
 @Composable
 fun LoadingIndicatorView(

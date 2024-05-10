@@ -6,6 +6,17 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Data Access Object (DAO) for the Employee table in the Room database.
+ *
+ * This interface provides methods for querying the Employee table and inserting new rows into it.
+ * Each method corresponds to a different SQL query.
+ *
+ * @see getAllEmployees for getting a Flow of all employees in the table.
+ * @see getEmployeeById for getting a Flow of a single employee by their ID.
+ * @see insertEmployee for inserting a single employee into the table.
+ * @see insertEmployees for inserting multiple employees into the table.
+ */
 @Dao
 interface EmployeeDao {
 

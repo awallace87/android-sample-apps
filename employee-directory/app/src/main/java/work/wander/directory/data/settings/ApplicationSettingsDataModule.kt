@@ -12,6 +12,9 @@ import dagger.hilt.components.SingletonComponent
 import work.wander.directory.proto.settings.ApplicationSettings
 import javax.inject.Singleton
 
+/**
+ * Dagger module for providing dependencies related to the application settings data store.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 class ApplicationSettingsDataModule {

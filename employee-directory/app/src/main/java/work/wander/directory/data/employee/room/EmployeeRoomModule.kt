@@ -9,6 +9,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+/**
+ * Dagger module for providing dependencies related to the Room database for employee data.
+ *
+ * This module provides the EmployeeDatabase, which is the Room database for the application.
+ *
+ * @see providesEmployeeRoomDatabase for providing the EmployeeDatabase.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 class EmployeeRoomModule {

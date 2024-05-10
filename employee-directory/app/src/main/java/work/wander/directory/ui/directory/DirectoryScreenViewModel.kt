@@ -72,7 +72,7 @@ class DirectoryScreenViewModel @Inject constructor(
  * Sealed class representing the possible UI states for the directory screen.
  */
 sealed class DirectoryScreenUiState {
-    object Loading : DirectoryScreenUiState()
+    data object Loading : DirectoryScreenUiState()
     data class Success(val employees: List<EmployeeRowData>) : DirectoryScreenUiState()
     data class Error(val message: String) : DirectoryScreenUiState()
 }

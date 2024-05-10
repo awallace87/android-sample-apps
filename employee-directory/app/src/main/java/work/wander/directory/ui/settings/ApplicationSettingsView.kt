@@ -33,6 +33,20 @@ import work.wander.directory.data.employee.remote.EmployeeDataUrl
 import work.wander.directory.proto.settings.ApplicationSettings
 import work.wander.directory.ui.theme.AppTheme
 
+/**
+ * Composable function for the Application Settings View.
+ *
+ * This function creates a view for the application settings. It includes a top bar with a title and a navigation icon.
+ * The view contains a column layout with rows for each setting. The settings include a checkbox for enabling developer mode,
+ * and additional settings that are available when developer mode is enabled.
+ *
+ * The function takes an ApplicationSettings object, a modifier for the Scaffold, and two callback functions for when the settings are updated and when the back button is selected.
+ *
+ * @param applicationSettings The ApplicationSettings object that holds the current settings.
+ * @param modifier The Modifier for the Scaffold. This can be used to apply layout and other visual transformations to the Scaffold.
+ * @param onSettingsUpdated A callback function that is called when a setting is updated. It takes an updated ApplicationSettings object as a parameter.
+ * @param onBackSelected A callback function that is called when the back button in the top bar is selected.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ApplicationSettingsView(

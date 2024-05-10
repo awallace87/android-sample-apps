@@ -16,6 +16,9 @@ import kotlinx.coroutines.withContext
 
 /**
  * Composable function to display an image loaded with Picasso.
+ *
+ * @param url The URL of the image to load.
+ * @param modifier Modifier to be applied to the layout.
  */
 @Composable
 fun PicassoImage(url: String?, modifier: Modifier) {
