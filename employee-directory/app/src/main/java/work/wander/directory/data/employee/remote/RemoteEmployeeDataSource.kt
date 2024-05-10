@@ -53,7 +53,7 @@ class DefaultRemoteEmployeeDataSource @Inject constructor(
         }.stateIn(
             coroutineScope,
             SharingStarted.Eagerly,
-            EmployeeDataUrl.Default
+            EmployeeDataUrl.Complete
         )
 
 
@@ -64,6 +64,12 @@ class DefaultRemoteEmployeeDataSource @Inject constructor(
 
     override suspend fun refreshDataFromRemote(): RemoteEmployeeDataSource.EmployeeDataResponse {
         return withContext(dispatcher) {
+            val currentActiveUrl = dataSourceUrl.value
+            if (currentActiveUrl == EmployeeDataUrl.Unknown) {
+                appLogger.warn("No active data source URL found. Cancelling fetch request.")
+                return@withContext RemoteEmployeeDataSource.EmployeeDataResponse.Error("No active data source URL present")
+            }
+
             val request = okhttp3.Request.Builder()
                 .url(dataSourceUrl.value.url)
                 .build()

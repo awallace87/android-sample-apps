@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Example"
+rootProject.name = "EmployeeDirectory"
 include(":app")
  

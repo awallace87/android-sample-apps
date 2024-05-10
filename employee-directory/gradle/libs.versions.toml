@@ -96,9 +96,11 @@ moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.re
 # Picasso
 picasso = { group = "com.squareup.picasso", name = "picasso", version.ref = "picasso" }
 
+# Google Fonts
+androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
+
 # Truth Assert
 truth-assert = { group = "com.google.truth", name = "truth", version.ref = "truthAssert" }
-androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

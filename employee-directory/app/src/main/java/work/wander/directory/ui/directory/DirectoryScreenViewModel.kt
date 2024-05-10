@@ -51,6 +51,7 @@ class DirectoryScreenViewModel @Inject constructor(
     val isRefreshing: State<Boolean> = isRefreshingEmployeeData
     fun fetchEmployees() {
         viewModelScope.launch(coroutineDispatcher) {
+
             isRefreshingEmployeeData.value = true
             val remoteFetchResult = remoteEmployeeDataSource.refreshDataFromRemote()
             if (remoteFetchResult is RemoteEmployeeDataSource.EmployeeDataResponse.Success) {

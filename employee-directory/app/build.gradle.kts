@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "work.wander.directory"
-        minSdk = 30
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -72,7 +72,6 @@ dependencies {
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.ui.text.google.fonts)
     ksp(libs.androidx.room.compiler)
 
     // Dagger
@@ -117,6 +116,9 @@ dependencies {
     // Material2
     implementation(libs.androidx.material2.core)
     implementation(libs.androidx.material2.android)
+
+    // Google Fonts
+    implementation(libs.androidx.ui.text.google.fonts)
 
     // Testing Core
     testImplementation(libs.junit)
