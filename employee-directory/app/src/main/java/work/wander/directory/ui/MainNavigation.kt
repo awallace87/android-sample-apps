@@ -49,7 +49,6 @@ fun MainNavigation() {
 
             EmployeeScreenView(
                 uiState = uiState.value,
-                onSettingsSelected = { navController.navigate("settings") },
                 onBackSelected = { navController.popBackStack() },
                 onEmailRequested = { email ->
                     employeeScreenViewModel.emailRequested(email)

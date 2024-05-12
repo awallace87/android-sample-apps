@@ -12,13 +12,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -40,7 +40,6 @@ fun EmployeeScreenView(
     uiState: EmployeeScreenUiState,
     modifier: Modifier = Modifier,
     onBackSelected: () -> Unit = {},
-    onSettingsSelected: () -> Unit = {},
     onCallRequested: (String) -> Unit = {},
     onEmailRequested: (String) -> Unit = {},
 ) {
@@ -50,7 +49,6 @@ fun EmployeeScreenView(
             EmployeeScreenTopBar(
                 uiState = uiState,
                 onBackSelected = onBackSelected,
-                onSettingsSelected = onSettingsSelected,
             )
         }
     ) {
@@ -74,8 +72,10 @@ fun EmployeeScreenView(
 
 @Composable
 fun EmployeeScreenContents(
-    uiState: EmployeeScreenUiState, modifier: Modifier = Modifier,
-    onCallRequested: (String) -> Unit = {}, onEmailRequested: (String) -> Unit = {},
+    uiState: EmployeeScreenUiState,
+    modifier: Modifier = Modifier,
+    onCallRequested: (String) -> Unit = {},
+    onEmailRequested: (String) -> Unit = {},
 ) {
     when (uiState) {
         is EmployeeScreenUiState.Initial,
@@ -171,7 +171,7 @@ fun EmployeeDetailsView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 32.dp, end = 32.dp),
+                .padding(start = 32.dp, end = 32.dp, bottom = 16.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -235,7 +235,6 @@ fun EmployeeDetailsView(
 fun EmployeeScreenTopBar(
     uiState: EmployeeScreenUiState,
     onBackSelected: () -> Unit = {},
-    onSettingsSelected: () -> Unit = {},
 ) {
     val appBarTitle = when (uiState) {
         is EmployeeScreenUiState.Initial,
@@ -271,8 +270,6 @@ fun EmployeeScreenTopBar(
                 )
             }
         },
-        actions = {
-        }
     )
 }
 
