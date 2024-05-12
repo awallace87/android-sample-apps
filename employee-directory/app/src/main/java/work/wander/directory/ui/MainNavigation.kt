@@ -51,6 +51,12 @@ fun MainNavigation() {
                 uiState = uiState.value,
                 onSettingsSelected = { navController.navigate("settings") },
                 onBackSelected = { navController.popBackStack() },
+                onEmailRequested = { email ->
+                    employeeScreenViewModel.emailRequested(email)
+                },
+                onCallRequested = { phoneNumber ->
+                    employeeScreenViewModel.phoneCallRequested(phoneNumber)
+                }
             )
         }
         composable("settings") {
@@ -60,7 +66,8 @@ fun MainNavigation() {
 
             ApplicationSettingsView(
                 applicationSettings = applicationSettings.value,
-                numSavedEmployeeState = applicationSettingsViewModel.getNumSavedEmployees().collectAsState(),
+                numSavedEmployeeState = applicationSettingsViewModel.getNumSavedEmployees()
+                    .collectAsState(),
                 modifier = Modifier.fillMaxSize(),
                 onSettingsUpdated = { applicationSettingsViewModel.updateApplicationSettings(it) },
                 onClearLocalDataSelected = { applicationSettingsViewModel.clearLocalData() },

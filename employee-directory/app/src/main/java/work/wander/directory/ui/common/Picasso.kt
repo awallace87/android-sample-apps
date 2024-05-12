@@ -3,11 +3,13 @@ package work.wander.directory.ui.common
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import com.squareup.picasso.Picasso
@@ -38,13 +40,17 @@ fun PicassoImage(url: String?, modifier: Modifier) {
     bitmap.value?.let {
         Image(
             bitmap = it.asImageBitmap(),
-            contentDescription = null,
+            contentDescription = "Image loaded with Picasso (URL: $url)",
             modifier = modifier
         )
     } ?: Box(
         modifier = modifier
     ) {
-        CircularProgressIndicator()
+        CircularProgressIndicator(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.Center)
+        )
     }
 
 }

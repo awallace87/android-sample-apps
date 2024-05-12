@@ -14,6 +14,10 @@ data class EmployeeDetailsData(
     val employeeType: String,
 ) {
     companion object {
+
+        fun getFormattedPhoneNumber(phoneNumber: String): String {
+            return phoneNumber.replaceFirst("(\\d{3})(\\d{3})(\\d+)".toRegex(), "($1) $2-$3")
+        }
         fun fromEmployeeEntity(employeeEntity: EmployeeEntity): EmployeeDetailsData {
             return EmployeeDetailsData(
                 id = employeeEntity.id,

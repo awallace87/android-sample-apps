@@ -27,7 +27,10 @@ fun LoadingIndicatorView(
                 this.contentDescription = contentDescription
             }
     ) {
-        CircularProgressIndicator()
+        CircularProgressIndicator(
+            modifier = Modifier
+                .align(Alignment.Center)
+        )
     }
 }
 

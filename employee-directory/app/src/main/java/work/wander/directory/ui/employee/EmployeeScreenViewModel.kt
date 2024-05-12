@@ -9,12 +9,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import work.wander.directory.data.employee.room.EmployeeDatabase
+import work.wander.directory.framework.logging.AppLogger
+import work.wander.directory.framework.toast.Toaster
 import java.time.Duration
 import javax.inject.Inject
 
 @HiltViewModel
 class EmployeeScreenViewModel @Inject constructor(
     employeeDatabase: EmployeeDatabase,
+    private val toaster: Toaster,
+    private val appLogger: AppLogger,
 ) : ViewModel() {
 
     private val _employeeId = MutableStateFlow<String?>(null)
@@ -43,6 +47,18 @@ class EmployeeScreenViewModel @Inject constructor(
 
     fun setEmployeeId(employeeId: String) {
         _employeeId.value = employeeId
+    }
+
+    fun phoneCallRequested(phoneNumber: String) {
+        // Handle the phone call request
+        appLogger.warn("Phone call requested for $phoneNumber - not implemented")
+        toaster.showToast("Share/Call requested for $phoneNumber - not implemented")
+    }
+
+    fun emailRequested(emailAddress: String) {
+        // Handle the email request
+        appLogger.warn("Share/Open $emailAddress - not implemented")
+        toaster.showToast("Share/Open $emailAddress - not implemented")
     }
 }
 
