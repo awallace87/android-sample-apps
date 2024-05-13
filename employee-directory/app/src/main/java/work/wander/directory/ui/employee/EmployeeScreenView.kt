@@ -1,5 +1,6 @@
 package work.wander.directory.ui.employee
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Email
@@ -113,8 +115,10 @@ fun EmployeeScreenContents(
 
 @Composable
 fun EmployeeDetailsView(
-    employee: EmployeeDetailsData, modifier: Modifier = Modifier,
-    onCallRequested: () -> Unit = {}, onEmailRequested: () -> Unit = {},
+    employee: EmployeeDetailsData,
+    modifier: Modifier = Modifier,
+    onCallRequested: () -> Unit = {},
+    onEmailRequested: () -> Unit = {},
 ) {
     Column(
         modifier = modifier,
@@ -124,14 +128,17 @@ fun EmployeeDetailsView(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f)
-                .padding(start = 32.dp, end = 32.dp)
+                .padding(32.dp)
         ) {
             PicassoImage(
                 url = employee.photoUrl,
+                displayLoadingAnimation = false,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clip(MaterialTheme.shapes.extraSmall),
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                    .align(Alignment.Center)
+                    .clip(CircleShape),
             )
         }
         Text(
@@ -247,8 +254,8 @@ fun EmployeeScreenTopBar(
         title = {
             Text(
                 appBarTitle,
-                style = MaterialTheme.typography.displayLarge,
-                fontSize = 24.sp,
+                style = MaterialTheme.typography.titleLarge,
+                fontSize = 20.sp,
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier

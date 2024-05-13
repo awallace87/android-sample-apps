@@ -121,7 +121,7 @@ fun DirectoryScreenView(
                             Icon(
                                 imageVector = Icons.Outlined.Settings,
                                 contentDescription = "Refresh",
-                                modifier = Modifier.size(36.dp),
+                                modifier = Modifier.size(24.dp),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }

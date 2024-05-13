@@ -23,7 +23,11 @@ import kotlinx.coroutines.withContext
  * @param modifier Modifier to be applied to the layout.
  */
 @Composable
-fun PicassoImage(url: String?, modifier: Modifier) {
+fun PicassoImage(
+    url: String?,
+    modifier: Modifier = Modifier,
+    displayLoadingAnimation: Boolean = true
+) {
     val bitmap = remember { mutableStateOf<Bitmap?>(null) }
 
     LaunchedEffect(url) {
@@ -46,11 +50,13 @@ fun PicassoImage(url: String?, modifier: Modifier) {
     } ?: Box(
         modifier = modifier
     ) {
-        CircularProgressIndicator(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.Center)
-        )
+        if (displayLoadingAnimation) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.Center)
+            )
+        }
     }
 
 }
