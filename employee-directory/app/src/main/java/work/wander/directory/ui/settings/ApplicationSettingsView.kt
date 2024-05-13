@@ -13,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -71,7 +70,8 @@ fun ApplicationSettingsView(
                 title = {
                     Text(
                         text = "Settings",
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                     )
@@ -80,7 +80,9 @@ fun ApplicationSettingsView(
                     IconButton(onClick = onBackSelected) {
                         Icon(
                             Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Navigate Back"
+                            tint = MaterialTheme.colorScheme.primary,
+                            contentDescription = "Navigate Back",
+                            modifier = Modifier.size(24.dp),
                         )
                     }
                 },
