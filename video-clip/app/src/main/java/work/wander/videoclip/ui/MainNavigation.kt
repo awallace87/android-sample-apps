@@ -21,11 +21,12 @@ fun MainNavigation() {
             val homeViewModel: HomeViewModel = hiltViewModel<HomeViewModel>()
 
             HomeView(
+                previousRecordings = homeViewModel.getPreviousRecordings().collectAsState().value,
                 onSettingsSelected = {
                     navController.navigate("settings")
                 },
                 onRecordingSelected = { recordingId ->
-                    navController.navigate("gallery/$recordingId")
+                    /* navController.navigate("gallery/$recordingId") */
                 },
                 onBeginRecordingSelected = {
                     navController.navigate("recording")

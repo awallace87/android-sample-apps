@@ -1,4 +1,4 @@
-package ai.yembo.androidvideorecorder.framework.application
+package work.wander.videoclip.framework.application
 
 import androidx.annotation.MainThread
 import dagger.Module

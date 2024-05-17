@@ -1,6 +1,7 @@
 package work.wander.videoclip.ui.recording
 
 import android.Manifest
+import android.widget.Space
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
@@ -8,15 +9,18 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Stop
@@ -29,6 +33,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -118,7 +123,9 @@ fun RecordingControls(
 
         RecordingControlButton(
             recorderState = recorderState,
-            modifier = Modifier.align(Alignment.Center),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(bottom = 16.dp),
             onStartRecording = onStartRecording,
             onStopRecording = onStopRecording
         )
@@ -153,21 +160,21 @@ fun RecordingControlButton(
 ) {
     // TODO: refactor to separate composables
     val primaryColor: Color = when (recorderState) {
-        VideoRecordingState.Initial -> MaterialTheme.colorScheme.primary
-        VideoRecordingState.Ready -> MaterialTheme.colorScheme.onSecondary
-        VideoRecordingState.Starting -> MaterialTheme.colorScheme.onTertiary
+        VideoRecordingState.Initial -> MaterialTheme.colorScheme.secondary
+        VideoRecordingState.Ready -> MaterialTheme.colorScheme.primary
+        VideoRecordingState.Starting -> MaterialTheme.colorScheme.secondary
         VideoRecordingState.Recording -> MaterialTheme.colorScheme.primary
-        VideoRecordingState.Stopping -> MaterialTheme.colorScheme.onSecondary
+        VideoRecordingState.Stopping -> MaterialTheme.colorScheme.secondary
         VideoRecordingState.Stopped -> MaterialTheme.colorScheme.primary
     }
 
     val secondaryColor: Color = when (recorderState) {
-        VideoRecordingState.Initial -> MaterialTheme.colorScheme.inversePrimary
-        VideoRecordingState.Ready -> MaterialTheme.colorScheme.secondary
-        VideoRecordingState.Starting -> MaterialTheme.colorScheme.tertiary
+        VideoRecordingState.Initial -> MaterialTheme.colorScheme.primary
+        VideoRecordingState.Ready -> MaterialTheme.colorScheme.tertiary
+        VideoRecordingState.Starting -> MaterialTheme.colorScheme.primary
         VideoRecordingState.Recording -> MaterialTheme.colorScheme.tertiary
-        VideoRecordingState.Stopping -> MaterialTheme.colorScheme.secondary
-        VideoRecordingState.Stopped -> MaterialTheme.colorScheme.secondary
+        VideoRecordingState.Stopping -> MaterialTheme.colorScheme.primary
+        VideoRecordingState.Stopped -> MaterialTheme.colorScheme.tertiary
     }
 
     Button(
@@ -179,15 +186,17 @@ fun RecordingControlButton(
         border = BorderStroke(4.dp, secondaryColor),
         onClick = {
             when (recorderState) {
+                VideoRecordingState.Stopped,
                 VideoRecordingState.Ready -> {
                     onStartRecording()
                 }
+
                 VideoRecordingState.Initial,
-                VideoRecordingState.Stopped,
                 VideoRecordingState.Stopping,
                 VideoRecordingState.Starting -> {
                     // Do nothing
                 }
+
                 VideoRecordingState.Recording -> {
                     onStopRecording()
                 }
@@ -262,48 +271,64 @@ fun CameraPermissionsDisplay(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Camera Permission Required",
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = "Camera Permission Required",
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .align(Alignment.Center)
+            )
+            IconButton(
+                onClick = { onDisplayDismiss() },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "Dismiss Permission Request",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp),
+                )
+
+            }
+        }
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 36.dp, end = 36.dp, bottom = 16.dp),
+            color = MaterialTheme.colorScheme.primary,
+
+            )
         Text(
             text = "Granting the camera permission to Video Clip is a requirement to record video clips.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
-        HorizontalDivider(
-            modifier = Modifier.height(8.dp),
-            thickness = 1.dp,
-            color = MaterialTheme.colorScheme.primary,
-        )
+        Spacer(modifier = Modifier.height(8.dp))
         if (permissionState.shouldShowRationale) {
             // Display a message explaining why the user should allow the camera permission
             Text(
-                text = "The camera is important for this app. Please grant the permission, when prompted.",
+                text = "Taking videos with the camera is vital for this app. Please grant the permission, when prompted.",
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center
             )
-        } else {
-            HorizontalDivider(
-                modifier = Modifier.height(8.dp),
-                thickness = 1.dp,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            OutlinedButton(
-                onClick = { permissionState.launchPermissionRequest() }
-            ) {
-                Text("Request Permission")
-            }
             Spacer(modifier = Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = { onDisplayDismiss() }
-            ) {
-                Text("Dismiss")
-            }
+        }
+        OutlinedButton(
+            modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
+            onClick = { permissionState.launchPermissionRequest() },
+
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+        ) {
+            Text("Request Permission")
         }
     }
 }
+
 
 @Preview
 @Composable
@@ -346,9 +371,12 @@ private fun CameraRecordingControlButtonPreview() {
 @Preview
 @Composable
 private fun CameraDeviceSelectionControlsPreview() {
-AppTheme {
+    AppTheme {
         DeviceSelectionControls(
-            availableCameraDevices = listOf(CameraSelectionInfo.Unspecified, CameraSelectionInfo.Unspecified),
+            availableCameraDevices = listOf(
+                CameraSelectionInfo.Unspecified,
+                CameraSelectionInfo.Unspecified
+            ),
             onCameraDeviceSelected = {}
         )
     }
