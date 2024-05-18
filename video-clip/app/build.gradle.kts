@@ -138,6 +138,15 @@ dependencies {
     // TODO ensure unused asset removal
     implementation("androidx.compose.material:material-icons-extended:$material3Version")
 
+    // ExoPlayer
+    val media3Version = "1.3.1"
+    implementation("androidx.media3:media3-exoplayer:$media3Version")
+    implementation("androidx.media3:media3-ui:$media3Version")
+    implementation("androidx.media3:media3-common:$media3Version")
+
+    // Unure if needed
+    //implementation 'com.google.android.exoplayer:exoplayer:2.16.1'
+
 
 
     // Testing Core

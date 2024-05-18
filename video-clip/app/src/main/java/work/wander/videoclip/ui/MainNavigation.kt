@@ -12,6 +12,8 @@ import work.wander.videoclip.ui.recording.RecordingScreenView
 import work.wander.videoclip.ui.recording.RecordingViewModel
 import work.wander.videoclip.ui.settings.ApplicationSettingsView
 import work.wander.videoclip.ui.settings.ApplicationSettingsViewModel
+import work.wander.videoclip.ui.video.VideoPlaybackView
+import work.wander.videoclip.ui.video.VideoPlaybackViewModel
 
 @Composable
 fun MainNavigation() {
@@ -25,8 +27,8 @@ fun MainNavigation() {
                 onSettingsSelected = {
                     navController.navigate("settings")
                 },
-                onRecordingSelected = { recordingId ->
-                    /* navController.navigate("gallery/$recordingId") */
+                onRecordingSelected = { previousRecordingItem ->
+                    navController.navigate("video/${previousRecordingItem.videoRepositoryId}")
                 },
                 onBeginRecordingSelected = {
                     navController.navigate("recording")
@@ -52,6 +54,25 @@ fun MainNavigation() {
                 onStopRecording = {
                     recordingViewModel.stopRecording()
                 },
+            )
+        }
+        composable("video/{videoId}") {
+            val videoPlaybackViewModel: VideoPlaybackViewModel =
+                hiltViewModel<VideoPlaybackViewModel>()
+
+            val videoId = it.arguments?.getString("videoId")?.toLongOrNull()
+
+            videoPlaybackViewModel.setVideoId(videoId ?: VideoPlaybackViewModel.NO_VIDEO_SPECIFIED)
+
+            val videoPlaybackUiState =
+                videoPlaybackViewModel.getVideoPlaybackUiState().collectAsState().value
+
+            VideoPlaybackView(
+                videoPlaybackUiState = videoPlaybackUiState,
+                onBackSelected = {
+                    navController.popBackStack()
+                }
+
             )
         }
         composable("settings") {

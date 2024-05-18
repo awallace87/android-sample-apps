@@ -10,6 +10,7 @@ import work.wander.videoclip.data.recordings.VideoRecordingsRepository
 import javax.inject.Inject
 
 data class PreviousRecordingItem(
+    val videoRepositoryId: Long,
     val durationInMillis: Long,
     val sizeInBytes: Long,
     val thumbnailPath: String,
@@ -26,6 +27,7 @@ class HomeViewModel @Inject constructor(
         .map { recordings ->
             recordings.map { recording ->
                 PreviousRecordingItem(
+                    videoRepositoryId = recording.id,
                     durationInMillis = recording.recordedDurationMillis,
                     sizeInBytes = recording.sizeInBytes,
                     thumbnailPath = recording.thumbnailFilePath,

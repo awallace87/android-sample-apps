@@ -158,7 +158,6 @@ fun RecordingControlButton(
     onStartRecording: () -> Unit = {},
     onStopRecording: () -> Unit = {},
 ) {
-    // TODO: refactor to separate composables
     val primaryColor: Color = when (recorderState) {
         VideoRecordingState.Initial -> MaterialTheme.colorScheme.secondary
         VideoRecordingState.Ready -> MaterialTheme.colorScheme.primary
