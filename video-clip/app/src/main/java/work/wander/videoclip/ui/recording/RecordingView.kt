@@ -1,11 +1,11 @@
 package work.wander.videoclip.ui.recording
 
 import android.Manifest
-import android.widget.Space
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,10 +17,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Stop
@@ -43,6 +45,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
@@ -54,6 +57,8 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.flow.StateFlow
 import work.wander.videoclip.ui.theme.AppTheme
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
 
 @OptIn(ExperimentalPermissionsApi::class)
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
@@ -62,7 +67,6 @@ fun RecordingScreenView(
     cameraController: LifecycleCameraController,
     videoRecordingStateFlow: StateFlow<VideoRecordingState>,
     modifier: Modifier = Modifier,
-    selectedCamera: CameraSelectionInfo = CameraSelectionInfo.Unspecified,
     availableCameras: List<CameraSelectionInfo> = emptyList(),
     onCameraSelected: (CameraSelectionInfo) -> Unit = {},
     onStartRecording: () -> Unit = {},
@@ -86,7 +90,6 @@ fun RecordingScreenView(
                 recorderState = recordingState,
                 availableCameraSelectors = availableCameras,
                 onCameraDeviceSelected = onCameraSelected,
-                selectedCamera = selectedCamera,
                 onStartRecording = onStartRecording,
                 onStopRecording = onStopRecording,
                 modifier = Modifier
@@ -112,7 +115,6 @@ fun RecordingControls(
     recorderState: VideoRecordingState,
     onCameraDeviceSelected: (CameraSelectionInfo) -> Unit = {},
     availableCameraSelectors: List<CameraSelectionInfo>,
-    selectedCamera: CameraSelectionInfo = CameraSelectionInfo.Unspecified,
     onStartRecording: () -> Unit = {},
     onStopRecording: () -> Unit = {},
 ) {
@@ -120,7 +122,6 @@ fun RecordingControls(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-
         RecordingControlButton(
             recorderState = recorderState,
             modifier = Modifier
@@ -130,13 +131,32 @@ fun RecordingControls(
             onStopRecording = onStopRecording
         )
 
+        val shouldShowRecordingStatus = when (recorderState) {
+            VideoRecordingState.Ready,
+            VideoRecordingState.Initial -> false
+
+            VideoRecordingState.Starting,
+            is VideoRecordingState.Recording,
+            VideoRecordingState.Stopping,
+            VideoRecordingState.Stopped -> true
+        }
+
+        if (shouldShowRecordingStatus) {
+            RecordingStatusDisplay(
+                videoRecordingState = recorderState,
+                modifier = Modifier
+                    .fillMaxWidth(0.4f)
+                    .align(Alignment.CenterStart)
+            )
+        }
+
         val isDeviceSelectionAvailable = when (recorderState) {
             VideoRecordingState.Ready -> true
             VideoRecordingState.Initial,
             VideoRecordingState.Stopped,
             VideoRecordingState.Stopping,
             VideoRecordingState.Starting,
-            VideoRecordingState.Recording -> false
+            is VideoRecordingState.Recording -> false
         }
 
         if (isDeviceSelectionAvailable) {
@@ -159,20 +179,20 @@ fun RecordingControlButton(
     onStopRecording: () -> Unit = {},
 ) {
     val primaryColor: Color = when (recorderState) {
-        VideoRecordingState.Initial -> MaterialTheme.colorScheme.secondary
-        VideoRecordingState.Ready -> MaterialTheme.colorScheme.primary
-        VideoRecordingState.Starting -> MaterialTheme.colorScheme.secondary
-        VideoRecordingState.Recording -> MaterialTheme.colorScheme.primary
-        VideoRecordingState.Stopping -> MaterialTheme.colorScheme.secondary
-        VideoRecordingState.Stopped -> MaterialTheme.colorScheme.primary
+        VideoRecordingState.Initial -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+        VideoRecordingState.Ready -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+        VideoRecordingState.Starting -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+        is VideoRecordingState.Recording -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+        VideoRecordingState.Stopping -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+        VideoRecordingState.Stopped -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
     }
 
     val secondaryColor: Color = when (recorderState) {
-        VideoRecordingState.Initial -> MaterialTheme.colorScheme.primary
+        VideoRecordingState.Initial -> MaterialTheme.colorScheme.secondary
         VideoRecordingState.Ready -> MaterialTheme.colorScheme.tertiary
-        VideoRecordingState.Starting -> MaterialTheme.colorScheme.primary
-        VideoRecordingState.Recording -> MaterialTheme.colorScheme.tertiary
-        VideoRecordingState.Stopping -> MaterialTheme.colorScheme.primary
+        VideoRecordingState.Starting -> MaterialTheme.colorScheme.secondary
+        is VideoRecordingState.Recording -> MaterialTheme.colorScheme.tertiary
+        VideoRecordingState.Stopping -> MaterialTheme.colorScheme.secondary
         VideoRecordingState.Stopped -> MaterialTheme.colorScheme.tertiary
     }
 
@@ -196,7 +216,7 @@ fun RecordingControlButton(
                     // Do nothing
                 }
 
-                VideoRecordingState.Recording -> {
+                is VideoRecordingState.Recording -> {
                     onStopRecording()
                 }
             }
@@ -207,7 +227,7 @@ fun RecordingControlButton(
             VideoRecordingState.Initial -> Icons.Default.VideocamOff
             VideoRecordingState.Ready -> Icons.Default.FiberManualRecord
             VideoRecordingState.Starting -> Icons.Outlined.Camera
-            VideoRecordingState.Recording -> Icons.Default.Stop
+            is VideoRecordingState.Recording -> Icons.Default.Stop
             VideoRecordingState.Stopping -> Icons.Default.Camera
             VideoRecordingState.Stopped -> Icons.Default.Replay
         }
@@ -223,6 +243,119 @@ fun RecordingControlButton(
 }
 
 @Composable
+fun RecordingStatusDisplay(
+    videoRecordingState: VideoRecordingState,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .padding(8.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.Start
+    ) {
+        Row(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                .padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            when (videoRecordingState) {
+                VideoRecordingState.Starting -> {
+                    Icon(
+                        Icons.Default.Camera,
+                        contentDescription = "Starting recording...",
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier
+                            .size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Starting",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                    )
+                }
+
+                is VideoRecordingState.Recording -> {
+                    Icon(
+                        Icons.Default.FiberManualRecord,
+                        contentDescription = "Recording",
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier
+                            .size(36.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    val durationMillis = videoRecordingState.recordingDurationMillis
+                    val hours = TimeUnit.MILLISECONDS.toHours(durationMillis)
+                    val minutes =
+                        TimeUnit.MILLISECONDS.toMinutes(durationMillis) % TimeUnit.HOURS.toMinutes(1)
+                    val seconds =
+                        TimeUnit.MILLISECONDS.toSeconds(durationMillis) % TimeUnit.MINUTES.toSeconds(
+                            1
+                        )
+                    val millis = durationMillis % TimeUnit.SECONDS.toMillis(1)
+                    val timestamp =
+                        String.format("%02d:%02d:%02d:%03d", hours, minutes, seconds, millis)
+                    Text(
+                        text = timestamp,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                    )
+                }
+
+                VideoRecordingState.Stopping -> {
+                    Icon(
+                        Icons.Default.Camera,
+                        contentDescription = "Recording",
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier
+                            .size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Stopping",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                    )
+                }
+
+                VideoRecordingState.Stopped -> {
+                    Icon(
+                        Icons.Default.Done,
+                        contentDescription = "Recording",
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .padding(4.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Saved Video",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                    )
+                }
+
+                else -> {
+                    // Display Nothing
+                }
+            }
+
+        }
+    }
+
+}
+
+@Composable
 fun DeviceSelectionControls(
     modifier: Modifier = Modifier,
     availableCameraDevices: List<CameraSelectionInfo>,
@@ -232,13 +365,20 @@ fun DeviceSelectionControls(
 
     Column(modifier = modifier) {
         OutlinedButton(
-            modifier = Modifier.size(72.dp),
-            onClick = { isCameraSelectorDropdownExpanded.value = true }
+            modifier = Modifier
+                .size(72.dp),
+            onClick = { isCameraSelectorDropdownExpanded.value = true },
+            colors = ButtonDefaults.outlinedButtonColors().copy(
+                contentColor = MaterialTheme.colorScheme.secondary,
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+
+            ),
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondary),
         ) {
             Icon(
                 Icons.Outlined.Cameraswitch,
                 contentDescription = "Select Camera Device",
-                tint = MaterialTheme.colorScheme.primary,
+                tint = MaterialTheme.colorScheme.secondary,
             )
         }
 
@@ -271,7 +411,9 @@ fun CameraPermissionsDisplay(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
             Text(
                 text = "Camera Permission Required",
@@ -328,6 +470,21 @@ fun CameraPermissionsDisplay(
     }
 }
 
+@Preview
+@Composable
+private fun RecordingStatusDisplayPreview() {
+    AppTheme {
+        Column {
+            RecordingStatusDisplay(videoRecordingState = VideoRecordingState.Starting)
+            Spacer(modifier = Modifier.width(8.dp))
+            RecordingStatusDisplay(videoRecordingState = VideoRecordingState.Recording(1000L))
+            Spacer(modifier = Modifier.width(8.dp))
+            RecordingStatusDisplay(videoRecordingState = VideoRecordingState.Stopping)
+            Spacer(modifier = Modifier.width(8.dp))
+            RecordingStatusDisplay(videoRecordingState = VideoRecordingState.Stopped)
+        }
+    }
+}
 
 @Preview
 @Composable
@@ -350,7 +507,7 @@ private fun CameraRecordingControlButtonPreview() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             RecordingControlButton(
-                recorderState = VideoRecordingState.Recording,
+                recorderState = VideoRecordingState.Recording(1000L),
                 onStopRecording = {},
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -397,7 +554,7 @@ private fun CameraPermissionsDisplayPreview() {
                 get() = true
 
             override fun launchPermissionRequest() {
-                {}
+                // Do nothing
             }
         }
         Box(modifier = Modifier.fillMaxWidth()) {

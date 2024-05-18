@@ -65,6 +65,8 @@ class VideoPlaybackViewModel @Inject constructor(
         // See: (https://developer.android.com/guide/topics/media/issues/player-accessed-on-wrong-thread)
         viewModelScope.launch(coroutineDispatcherMain) {
             val videoFile = MediaItem.fromUri(videoFilePath)
+            exoPlayer.playWhenReady = false
+            exoPlayer.stop()
             exoPlayer.setMediaItem(videoFile)
             exoPlayer.prepare()
             videoPlaybackUiState.update {

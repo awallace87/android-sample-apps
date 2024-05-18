@@ -3,16 +3,21 @@ package work.wander.videoclip.ui.home
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Camera
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.Timelapse
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,7 +37,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import work.wander.videoclip.R
+import work.wander.videoclip.ui.common.CoilLocalImageView
 import work.wander.videoclip.ui.theme.AppTheme
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun HomeView(
@@ -73,14 +82,25 @@ fun HomeTopAppBar(modifier: Modifier = Modifier, onSettingsSelected: () -> Unit 
             Text(
                 text = "Video Clips",
                 modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.displayMedium,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
                 textAlign = TextAlign.Center
             )
         },
+        colors = TopAppBarDefaults.topAppBarColors().copy(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+
+            ),
         modifier = modifier,
         actions = {
             IconButton(onClick = { onSettingsSelected() }) {
-                Icon(Icons.Outlined.Settings, contentDescription = "Navigate to settings")
+                Icon(
+                    Icons.Outlined.Settings,
+                    contentDescription = "Navigate to settings",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     )
@@ -106,7 +126,7 @@ fun HomeContent(
         ) {
             Text(
                 text = "Welcome to Video Clips!",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .padding(top = 16.dp, start = 16.dp, end = 16.dp)
@@ -147,7 +167,7 @@ fun HomeContent(
         ) {
             Text(
                 text = "Previous Recordings",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .padding(top = 16.dp, start = 16.dp, end = 16.dp)
@@ -204,38 +224,113 @@ fun PreviousRecordingItemView(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.image_absent),
-                contentDescription = "Image Absent",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            )
             Text(
-                text = "Duration: ${previousRecordingItem.durationInMillis} ms",
-                style = MaterialTheme.typography.bodyMedium,
+                text = previousRecordingItem.captureStartedFormatted(),
+                style = MaterialTheme.typography.labelLarge,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .fillMaxWidth(),
             )
-            Text(
-                text = "Size: ${previousRecordingItem.sizeInBytes} bytes",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth()
-            )
-            Text(
-                text = "Recording Status: ${previousRecordingItem.recordingStatus}",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth()
-            )
+            if (previousRecordingItem.thumbnailPath.isNotEmpty()) {
+                CoilLocalImageView(filePath = previousRecordingItem.thumbnailPath,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp))
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.image_absent),
+                    contentDescription = "Thumbnail",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier
+                        .weight(0.33f)
+                ) {
+                    Icon(
+                        Icons.Outlined.Timelapse,
+                        contentDescription = "Video Duration",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = previousRecordingItem.durationFormatted(),
+                        style = MaterialTheme.typography.labelMedium,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .weight(0.33f)
+                ) {
+                    Icon(Icons.Outlined.Storage, contentDescription = "Size on Disk (bytes)")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = previousRecordingItem.formatSizeInMb(),
+                        style = MaterialTheme.typography.labelMedium,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .weight(0.33f)
+                ) {
+                    Icon(
+                        Icons.Outlined.Camera,
+                        contentDescription = "Recording Status",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = previousRecordingItem.recordingStatus,
+                        style = MaterialTheme.typography.labelMedium,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    )
+                }
+
+            }
+
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PreviousRecordingItemViewPreview() {
+    AppTheme {
+        PreviousRecordingItemView(
+            previousRecordingItem = PreviousRecordingItem(
+                videoRepositoryId = 1,
+                durationInMillis = 1000,
+                sizeInBytes = 1000,
+                captureStartedAtEpochMillis = System.currentTimeMillis(),
+                thumbnailPath = "",
+                videoFilePath = "",
+                recordingStatus = "Unspecified"
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HomeTopAppBarPreview() {
+    AppTheme {
+        HomeTopAppBar()
     }
 }
 
@@ -246,5 +341,12 @@ private fun HomeContentPreview() {
     AppTheme {
         HomeContent()
     }
+}
 
+@Preview
+@Composable
+private fun HomeViewPreview() {
+    AppTheme {
+        HomeView()
+    }
 }

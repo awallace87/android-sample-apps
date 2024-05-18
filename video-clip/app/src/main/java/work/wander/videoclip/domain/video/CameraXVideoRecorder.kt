@@ -29,11 +29,12 @@ import javax.inject.Inject
 class CameraXVideoRecorder @Inject constructor(
     @ForVideoRecording private val videoRecordingDirectory: File,
     private val lifecycleCameraController: LifecycleCameraController,
+    private val videoRecordingRepository: VideoRecordingsRepository,
+    private val previewImageUpdater: PreviewImageUpdater,
     @ForCameraX private val cameraXCoroutineScope: CoroutineScope,
     @MainThread private val mainDispatcher: CoroutineDispatcher,
     @BackgroundThread private val backgroundDispatcher: CoroutineDispatcher,
     @BackgroundThread private val executor: Executor,
-    private val videoRecordingRepository: VideoRecordingsRepository,
     private val appLogger: AppLogger,
     private val appClock: AppClock
 ) : VideoRecorder {
@@ -171,18 +172,27 @@ class CameraXVideoRecorder @Inject constructor(
                         // Expected states
                         is RecorderState.RecordingStart -> {
                             appLogger.info("Recording active from start")
-                            RecorderState.RecordingActive(currentState.recording)
+                            RecorderState.RecordingActive(
+                                recording = currentState.recording,
+                                recordingDurationMillis = TimeUnit.NANOSECONDS.toMillis(event.recordingStats.recordedDurationNanos)
+                            )
                         }
 
                         is RecorderState.RecordingActive -> {
                             appLogger.info("Recording active from active, most common")
 
-                            RecorderState.RecordingActive(currentState.recording)
+                            RecorderState.RecordingActive(
+                                recording = currentState.recording,
+                                recordingDurationMillis = TimeUnit.NANOSECONDS.toMillis(event.recordingStats.recordedDurationNanos)
+                            )
                         }
 
                         is RecorderState.RecordingResumed -> {
                             appLogger.info("Recording active from resumed")
-                            RecorderState.RecordingActive(currentState.recording)
+                            RecorderState.RecordingActive(
+                                recording = currentState.recording,
+                                recordingDurationMillis = TimeUnit.NANOSECONDS.toMillis(event.recordingStats.recordedDurationNanos)
+                            )
                         }
                         // Unexpected states
                         is RecorderState.RecordingPaused,
@@ -225,6 +235,16 @@ class CameraXVideoRecorder @Inject constructor(
                         }
                     }
                 }
+                // Update Preview Image (only if recording was successful)
+                cameraXCoroutineScope.launch(backgroundDispatcher) {
+                    val didCreateThumbnail =
+                        previewImageUpdater.createAndUpdatePreviewImageFor(videoRecordingEntity).await()
+                    if (!didCreateThumbnail) {
+                        appLogger.error("Failed to create thumbnail for video: ${videoRecordingEntity.videoFilePath}")
+                    } else {
+                        appLogger.debug("Thumbnail created for video: ${videoRecordingEntity.videoFilePath}")
+                    }
+                }
             }
 
             is VideoRecordEvent.Pause -> {
@@ -234,7 +254,10 @@ class CameraXVideoRecorder @Inject constructor(
                         // Expected states
                         is RecorderState.RecordingActive -> {
                             appLogger.info("Recording paused from active")
-                            RecorderState.RecordingPaused(currentState.recording)
+                            RecorderState.RecordingPaused(
+                                currentState.recordingDurationMillis,
+                                currentState.recording
+                            )
                         }
                         // Unexpected states
                         is RecorderState.RecordingPaused,
@@ -259,7 +282,10 @@ class CameraXVideoRecorder @Inject constructor(
                         // Expected states
                         is RecorderState.RecordingPaused -> {
                             appLogger.info("Recording resumed from paused")
-                            RecorderState.RecordingResumed(currentState.recording)
+                            RecorderState.RecordingResumed(
+                                currentState.recordingDurationMillis,
+                                currentState.recording
+                            )
                         }
                         // Unexpected states
                         is RecorderState.RecordingResumed,
@@ -320,6 +346,7 @@ class CameraXVideoRecorder @Inject constructor(
                 )
             )
         }
+
 
     }
 

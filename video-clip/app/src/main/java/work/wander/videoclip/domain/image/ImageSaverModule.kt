@@ -1,4 +1,4 @@
-package work.wander.videoclip.domain.video
+package work.wander.videoclip.domain.image
 
 import android.content.Context
 import dagger.Binds
@@ -13,19 +13,19 @@ import javax.inject.Singleton
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class ForVideoRecording
+annotation class ForThumbnailImages
 
 @Module
 @InstallIn(SingletonComponent::class)
-class VideoRecordingModule {
+class ImageSaverModule {
 
     @Provides
+    @ForThumbnailImages
     @Singleton
-    @ForVideoRecording
-    fun provideVideoRecordingDirectory(
+    fun provideThumbnailImageDirectory(
         @ApplicationContext context: Context
-    ) : File {
-        return context.filesDir.resolve("video-clips").apply {
+    ): File {
+        return File(context.filesDir, "thumbnails").apply {
             if (!exists()) {
                 mkdirs()
             }
@@ -35,13 +35,11 @@ class VideoRecordingModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class VideoRecordingBindsModule {
+abstract class ImageSaverBindsModule {
 
     @Binds
     @Singleton
-    abstract fun bindVideoRecorder(videoRecorder: CameraXVideoRecorder): VideoRecorder
-
-    @Binds
-    @Singleton
-    abstract fun bindPreviewImageUpdater(previewImageUpdater: DefaultPreviewImageUpdater): PreviewImageUpdater
+    abstract fun providesImageSaver(
+        defaultImageSaver: DefaultImageSaver
+    ): ImageSaver
 }

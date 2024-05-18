@@ -114,40 +114,30 @@ dependencies {
     // Picasso
     implementation(libs.picasso)
 
+    // Coil
+    implementation(libs.coil.core)
+    implementation(libs.coil.compose)
+
     // Google Fonts
     implementation(libs.androidx.ui.text.google.fonts)
 
-    // CameraX core library using the camera2 implementation
-    val cameraxVersion = "1.4.0-alpha05"
-    // The following line is optional, as the core library is included indirectly by camera-camera2
-    implementation("androidx.camera:camera-core:${cameraxVersion}")
-    implementation("androidx.camera:camera-camera2:${cameraxVersion}")
-    // If you want to additionally use the CameraX Lifecycle library
-    implementation("androidx.camera:camera-lifecycle:${cameraxVersion}")
-    // If you want to additionally use the CameraX VideoCapture library
-    implementation("androidx.camera:camera-video:${cameraxVersion}")
-    // If you want to additionally use the CameraX View class
-    implementation("androidx.camera:camera-view:${cameraxVersion}")
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.video)
+    implementation(libs.camerax.view)
 
     // Accompanist
     val accompanistPermissionsVersion = "0.23.1"
     implementation("com.google.accompanist:accompanist-permissions:$accompanistPermissionsVersion")
 
-    // Material3 Icons
-    val material3Version = "1.6.2"
-    // TODO ensure unused asset removal
-    implementation("androidx.compose.material:material-icons-extended:$material3Version")
+    // Material Extended Icons - For Camera UX
+    implementation(libs.material.icons.extended)
 
     // ExoPlayer
-    val media3Version = "1.3.1"
-    implementation("androidx.media3:media3-exoplayer:$media3Version")
-    implementation("androidx.media3:media3-ui:$media3Version")
-    implementation("androidx.media3:media3-common:$media3Version")
-
-    // Unure if needed
-    //implementation 'com.google.android.exoplayer:exoplayer:2.16.1'
-
-
+    implementation(libs.media3.common)
+    implementation(libs.media3.ui)
+    implementation(libs.media3.exoplayer)
 
     // Testing Core
     testImplementation(libs.junit)

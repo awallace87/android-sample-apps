@@ -23,12 +23,15 @@ sealed interface RecorderState {
         val recording: Recording
     ): RecorderState
     data class RecordingActive(
+        val recordingDurationMillis: Long,
         val recording: Recording
     ) : RecorderState
     data class RecordingPaused(
+        val recordingDurationMillis: Long,
         val recording: Recording
     ) : RecorderState
     data class RecordingResumed(
+        val recordingDurationMillis: Long,
         val recording: Recording
     ) : RecorderState
     object RecordingStopping : RecorderState

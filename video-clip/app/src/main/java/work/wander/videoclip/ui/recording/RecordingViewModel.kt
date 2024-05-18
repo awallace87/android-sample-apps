@@ -42,7 +42,10 @@ sealed interface VideoRecordingState {
     object Initial : VideoRecordingState
     object Ready : VideoRecordingState
     object Starting : VideoRecordingState
-    object Recording : VideoRecordingState
+    data class Recording(
+        val recordingDurationMillis: Long,
+    ) : VideoRecordingState
+
     object Stopping : VideoRecordingState
     object Stopped : VideoRecordingState
 }
@@ -82,9 +85,19 @@ class RecordingViewModel @Inject constructor(
                 is RecorderState.Idle -> VideoRecordingState.Ready
                 is RecorderState.Initializing -> VideoRecordingState.Starting
                 is RecorderState.RecordingStart -> VideoRecordingState.Starting
-                is RecorderState.RecordingActive -> VideoRecordingState.Recording
-                is RecorderState.RecordingPaused -> VideoRecordingState.Recording
-                is RecorderState.RecordingResumed -> VideoRecordingState.Recording
+                is RecorderState.RecordingActive -> VideoRecordingState.Recording(
+                    recordingDurationMillis = recorderState.recordingDurationMillis
+
+                )
+
+                is RecorderState.RecordingPaused -> VideoRecordingState.Recording(
+                    recordingDurationMillis = recorderState.recordingDurationMillis
+                )
+
+                is RecorderState.RecordingResumed -> VideoRecordingState.Recording(
+                    recordingDurationMillis = recorderState.recordingDurationMillis
+                )
+
                 is RecorderState.RecordingStopping -> VideoRecordingState.Stopping
                 is RecorderState.RecordingFinished -> VideoRecordingState.Stopped
                 is RecorderState.Error -> VideoRecordingState.Stopped

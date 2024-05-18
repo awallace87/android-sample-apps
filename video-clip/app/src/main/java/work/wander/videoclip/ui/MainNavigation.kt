@@ -38,7 +38,6 @@ fun MainNavigation() {
         composable("recording") {
             val recordingViewModel: RecordingViewModel = hiltViewModel<RecordingViewModel>()
             val availableCameras = recordingViewModel.availableCameras.collectAsState().value
-            val selectedCamera = recordingViewModel.selectedCamera.collectAsState().value
 
             RecordingScreenView(
                 cameraController = recordingViewModel.lifecycleCameraController,
@@ -46,7 +45,6 @@ fun MainNavigation() {
                 onCameraSelected = { cameraInfo ->
                     recordingViewModel.cameraDeviceSelected(cameraInfo)
                 },
-                selectedCamera = selectedCamera,
                 videoRecordingStateFlow = recordingViewModel.getVideoRecordingState(),
                 onStartRecording = {
                     recordingViewModel.startRecording()
