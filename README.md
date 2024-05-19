@@ -5,3 +5,4 @@ A collection of simple Android applications, built with contemporary best practi
 ## Sample Apps
 
 - Employee Directory: Sample Contacts List application, displaying a directory of sample "colleagues" along with detailed display when they are selected.
+- Video Clips: Example implementation of a CameraX-based video recording application, with a simple UI for recording and playback.
