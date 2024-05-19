@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PomoGoGetter"
+rootProject.name = "PomodoGetter"
 include(":app")
  
