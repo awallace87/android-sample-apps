@@ -12,8 +12,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import work.wander.videoclip.data.recordings.VideoRecordingsRepository
+import work.wander.videoclip.data.recordings.entity.VideoRecordingEntity
 import work.wander.videoclip.framework.annotation.BackgroundThread
 import work.wander.videoclip.framework.logging.AppLogger
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 sealed interface VideoPlaybackUiState {
@@ -22,7 +28,16 @@ sealed interface VideoPlaybackUiState {
     data class Error(val errorMessage: String) : VideoPlaybackUiState
     data class PlayerReady(
         val exoPlayer: ExoPlayer,
-    ) : VideoPlaybackUiState
+        val videoRecordingEntity: VideoRecordingEntity
+    ) : VideoPlaybackUiState {
+        fun getTitleText(): String {
+            return FORMATTER.format(LocalDateTime.ofEpochSecond(TimeUnit.MILLISECONDS.toSeconds(videoRecordingEntity.timeCapturedEpochMillis), 0, ZoneOffset.UTC))
+        }
+        companion object {
+            const val DATE_FORMAT = "yyyy-MM-dd HH:mm"
+            val FORMATTER = DateTimeFormatter.ofPattern(DATE_FORMAT)
+        }
+    }
 }
 
 @HiltViewModel
@@ -50,7 +65,7 @@ class VideoPlaybackViewModel @Inject constructor(
                 val videoRecording = videoPlaybackRepository.getRecordingById(videoRecordingId)
                 if (videoRecording != null) {
                     appLogger.info("Video found for playback: ${videoRecording.videoFilePath}")
-                    setVideoFileForPlayback(videoRecording.videoFilePath)
+                    loadRecordingIntoPlayer(videoRecording)
                 } else {
                     appLogger.error("No data found for recording ID: $videoRecordingId")
                     videoPlaybackUiState.update { VideoPlaybackUiState.Error("Video not found") }
@@ -59,19 +74,20 @@ class VideoPlaybackViewModel @Inject constructor(
         }
     }
 
-    private fun setVideoFileForPlayback(videoFilePath: String) {
-        videoPlaybackUiState.update { VideoPlaybackUiState.LoadingMedia("Loading ($videoFilePath) for playback") }
+    private fun loadRecordingIntoPlayer(videoRecording: VideoRecordingEntity) {
+        videoPlaybackUiState.update { VideoPlaybackUiState.LoadingMedia("Loading ($videoRecording) for playback") }
         // ExoPlayer requires the media item to be set on the main thread
         // See: (https://developer.android.com/guide/topics/media/issues/player-accessed-on-wrong-thread)
         viewModelScope.launch(coroutineDispatcherMain) {
-            val videoFile = MediaItem.fromUri(videoFilePath)
+            val videoFile = MediaItem.fromUri(videoRecording.videoFilePath)
             exoPlayer.playWhenReady = false
             exoPlayer.stop()
             exoPlayer.setMediaItem(videoFile)
             exoPlayer.prepare()
             videoPlaybackUiState.update {
                 VideoPlaybackUiState.PlayerReady(
-                    exoPlayer = exoPlayer
+                    exoPlayer = exoPlayer,
+                    videoRecordingEntity = videoRecording
                 )
             }
         }

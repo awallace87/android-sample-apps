@@ -1,13 +1,14 @@
 package work.wander.videoclip.ui.video
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,9 +19,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.media3.exoplayer.ExoPlayer
 import work.wander.videoclip.ui.common.ExoPlayerVideoView
+import work.wander.videoclip.ui.theme.AppTheme
 
 @Composable
 fun VideoPlaybackView(
@@ -30,7 +32,7 @@ fun VideoPlaybackView(
 ) {
     Scaffold(
         topBar = {
-            VideoPlaybackTopAppBar(onBackSelected = onBackSelected)
+            VideoPlaybackTopAppBar(videoPlaybackUiState, onBackSelected = onBackSelected)
         },
         modifier = modifier,
     ) {
@@ -91,16 +93,53 @@ fun VideoPlaybackView(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoPlaybackTopAppBar(
+    videoPlaybackUiState: VideoPlaybackUiState,
     modifier: Modifier = Modifier,
     onBackSelected: () -> Unit = {},
 ) {
+    val titleText = when (videoPlaybackUiState) {
+        is VideoPlaybackUiState.Error -> "Error Playing Video"
+        VideoPlaybackUiState.Initial -> "Video Playback"
+        is VideoPlaybackUiState.LoadingMedia -> "Loading ..."
+        is VideoPlaybackUiState.PlayerReady -> videoPlaybackUiState.getTitleText()
+    }
     TopAppBar(
-        title = { Text(text = "Video Playback") },
+        title = {
+            Text(
+                text = titleText,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        },
         modifier = modifier,
         navigationIcon = {
             IconButton(onClick = { onBackSelected() }) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Navigate Back")
+                Icon(
+                    Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = "Navigate Back",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
         }
     )
+}
+
+@Preview
+@Composable
+private fun VideoPlaybackTopAppBarPreview() {
+    AppTheme {
+        Column {
+            VideoPlaybackTopAppBar(
+                videoPlaybackUiState = VideoPlaybackUiState.Initial
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            VideoPlaybackTopAppBar(
+                videoPlaybackUiState = VideoPlaybackUiState.LoadingMedia("Loading media")
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            VideoPlaybackTopAppBar(
+                videoPlaybackUiState = VideoPlaybackUiState.Error("Error message")
+            )
+        }
+    }
 }

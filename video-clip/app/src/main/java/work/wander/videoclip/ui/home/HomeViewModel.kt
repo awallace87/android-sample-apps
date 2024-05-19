@@ -7,11 +7,14 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import work.wander.videoclip.data.recordings.VideoRecordingsRepository
+import work.wander.videoclip.data.recordings.entity.VideoRecordingEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 data class PreviousRecordingItem(
     val videoRepositoryId: Long,
@@ -20,18 +23,20 @@ data class PreviousRecordingItem(
     val captureStartedAtEpochMillis: Long,
     val thumbnailPath: String,
     val videoFilePath: String,
-    val recordingStatus: String = "Unspecified",
+    val recordingStatus: VideoRecordingEntity.RecordingStatus = VideoRecordingEntity.RecordingStatus.INITIAL,
 ) {
     fun captureStartedFormatted(): String =
         CAPTURE_STARTED_FORMATTER.format(Date(captureStartedAtEpochMillis))
 
     fun durationFormatted(): String {
-        val hours = TimeUnit.MILLISECONDS.toHours(durationInMillis)
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(durationInMillis) % TimeUnit.HOURS.toMinutes(1)
-        val seconds =
-            TimeUnit.MILLISECONDS.toSeconds(durationInMillis) % TimeUnit.MINUTES.toSeconds(1)
-        val millis = durationInMillis % TimeUnit.SECONDS.toMillis(1)
-        return String.format("%02d:%02d:%02d:%03d", hours, minutes, seconds, millis)
+        val duration = durationInMillis.toDuration(DurationUnit.MILLISECONDS)
+        return String.format(
+            "%02d:%02d:%02d:%03d",
+            duration.inWholeHours,
+            duration.inWholeMinutes % 60,
+            duration.inWholeSeconds % 60,
+            duration.inWholeMilliseconds % 1000
+        )
     }
 
     fun formatSizeInMb(): String {
@@ -41,6 +46,7 @@ data class PreviousRecordingItem(
 
     companion object {
         private const val CAPTURE_STARTED_FORMAT = "MMMM d, yyyy - HH:mm"
+        private const val DURATION_TIME_FORMAT = "%02d:%02d:%02d:%03d"
         private val CAPTURE_STARTED_FORMATTER =
             SimpleDateFormat(CAPTURE_STARTED_FORMAT, Locale.getDefault())
     }
@@ -48,7 +54,7 @@ data class PreviousRecordingItem(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val videoRecordingsRepository: VideoRecordingsRepository,
+    videoRecordingsRepository: VideoRecordingsRepository,
 ) : ViewModel() {
 
     private val previousRecordings = videoRecordingsRepository.getPreviousRecordings()
@@ -61,7 +67,7 @@ class HomeViewModel @Inject constructor(
                     captureStartedAtEpochMillis = recording.timeCapturedEpochMillis,
                     thumbnailPath = recording.thumbnailFilePath,
                     videoFilePath = recording.videoFilePath,
-                    recordingStatus = recording.recordingStatus.status
+                    recordingStatus = recording.recordingStatus
                 )
             }
         }

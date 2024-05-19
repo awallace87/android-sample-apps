@@ -30,6 +30,7 @@ media3 = "1.3.1"
 materialIcons = "1.6.7"
 cameraX = "1.3.3"
 coilImage = "2.6.0"
+accompanistPermissions = "0.23.1"
 
 [libraries]
 # Core/Default
@@ -93,6 +94,10 @@ moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.re
 # Picasso
 picasso = { group = "com.squareup.picasso", name = "picasso", version.ref = "picasso" }
 
+# Coil Image
+coil-core = { group = "io.coil-kt", name = "coil", version.ref = "coilImage" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilImage" }
+
 # Google Fonts
 androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 
@@ -104,10 +109,8 @@ media3-common = { group = "androidx.media3", name = "media3-common", version.ref
 media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
 media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 
-# Coil Image
-coil-core = { group = "io.coil-kt", name = "coil", version.ref = "coilImage" }
-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilImage" }
-
+# Accompanist Permissions
+accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanistPermissions" }
 
 # CameraX
 camerax-core = { group = "androidx.camera", name = "camera-core", version.ref = "cameraX" }

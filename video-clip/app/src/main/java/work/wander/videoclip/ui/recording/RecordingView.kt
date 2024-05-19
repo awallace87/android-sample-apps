@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -384,6 +385,7 @@ fun DeviceSelectionControls(
 
         DropdownMenu(
             expanded = isCameraSelectorDropdownExpanded.value,
+            offset = DpOffset((-32).dp, (-16).dp),
             onDismissRequest = { isCameraSelectorDropdownExpanded.value = false }) {
             availableCameraDevices.forEach { cameraSelectionInfo ->
                 DropdownMenuItem(
@@ -413,7 +415,6 @@ fun CameraPermissionsDisplay(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
         ) {
             Text(
                 text = "Camera Permission Required",
@@ -440,24 +441,28 @@ fun CameraPermissionsDisplay(
         HorizontalDivider(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 36.dp, end = 36.dp, bottom = 16.dp),
+                .padding(start = 32.dp, end = 32.dp, bottom = 16.dp),
             color = MaterialTheme.colorScheme.primary,
 
             )
         Text(
             text = "Granting the camera permission to Video Clip is a requirement to record video clips.",
             style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .padding(start = 32.dp, end = 32.dp, bottom = 8.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         if (permissionState.shouldShowRationale) {
             // Display a message explaining why the user should allow the camera permission
             Text(
                 text = "Taking videos with the camera is vital for this app. Please grant the permission, when prompted.",
                 style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(start = 32.dp, end = 32.dp, bottom = 8.dp)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
         }
         OutlinedButton(
             modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),

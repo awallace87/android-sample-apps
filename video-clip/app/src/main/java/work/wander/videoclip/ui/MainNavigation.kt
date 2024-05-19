@@ -52,6 +52,9 @@ fun MainNavigation() {
                 onStopRecording = {
                     recordingViewModel.stopRecording()
                 },
+                onBackSelected = {
+                    navController.popBackStack()
+                }
             )
         }
         composable("video/{videoId}") {

@@ -128,8 +128,7 @@ dependencies {
     implementation(libs.camerax.view)
 
     // Accompanist
-    val accompanistPermissionsVersion = "0.23.1"
-    implementation("com.google.accompanist:accompanist-permissions:$accompanistPermissionsVersion")
+    implementation(libs.accompanist.permissions)
 
     // Material Extended Icons - For Camera UX
     implementation(libs.material.icons.extended)
