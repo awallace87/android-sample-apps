@@ -72,6 +72,10 @@ fun MainNavigation() {
                 videoPlaybackUiState = videoPlaybackUiState,
                 onBackSelected = {
                     navController.popBackStack()
+                },
+                onVideoDeletionSelected = { recordingEntity ->
+                    navController.popBackStack()
+                    videoPlaybackViewModel.deleteVideoRecording(recordingEntity)
                 }
 
             )

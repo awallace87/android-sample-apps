@@ -10,11 +10,25 @@ import work.wander.videoclip.framework.camerax.ForCameraX
 import java.io.File
 import javax.inject.Inject
 
+/**
+ * Interface for saving images, as local files, to the device.
+ */
 interface ImageSaver {
 
+    /**
+     * Saves the given [bitmap] as a local file with the given [fileName].
+     *
+     * @param bitmap The [Bitmap] to save.
+     * @param fileName The name of the file to save the [Bitmap] as (JPEG Only).
+     *
+     * @return A [Deferred] that will complete with the [File] that was saved.
+     */
     fun saveThumbnailImage(bitmap: Bitmap, fileName: String): Deferred<File?>
 }
 
+/**
+ * Default implementation of [ImageSaver].
+ */
 class DefaultImageSaver @Inject constructor(
     @BackgroundThread private val backgroundThreadDispatcher: CoroutineDispatcher,
     @ForCameraX private val backgroundCoroutineScope: CoroutineScope,

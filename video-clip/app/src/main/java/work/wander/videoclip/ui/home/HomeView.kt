@@ -6,24 +6,26 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Camera
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.QuestionMark
+import androidx.compose.material.icons.outlined.FiberManualRecord
+import androidx.compose.material.icons.outlined.Loop
+import androidx.compose.material.icons.outlined.NotStarted
+import androidx.compose.material.icons.outlined.Pause
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Timelapse
@@ -43,7 +45,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -53,8 +54,6 @@ import work.wander.videoclip.R
 import work.wander.videoclip.data.recordings.entity.VideoRecordingEntity
 import work.wander.videoclip.ui.common.CoilLocalImageView
 import work.wander.videoclip.ui.theme.AppTheme
-import java.time.Instant
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun HomeView(
@@ -261,7 +260,12 @@ fun HomeContent(
                     )
                 }
             } else {
-                LazyVerticalGrid(columns = GridCells.Fixed(2)) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                ) {
                     items(previousRecordings.size) { recording ->
                         val previousRecordingItem = previousRecordings[recording]
                         PreviousRecordingItemView(
@@ -374,7 +378,12 @@ fun PreviousRecordingItemView(
                         VideoRecordingEntity.RecordingStatus.SAVED -> Icons.Outlined.CheckCircle
                         VideoRecordingEntity.RecordingStatus.ERROR -> Icons.Outlined.ErrorOutline
                         VideoRecordingEntity.RecordingStatus.FAILED -> Icons.Outlined.Cancel
-                        else -> Icons.Outlined.QuestionMark
+                        VideoRecordingEntity.RecordingStatus.INITIAL -> Icons.Outlined.NotStarted
+                        VideoRecordingEntity.RecordingStatus.STARTING -> Icons.Outlined.Loop
+                        VideoRecordingEntity.RecordingStatus.STARTED -> Icons.Outlined.PlayArrow
+                        VideoRecordingEntity.RecordingStatus.PAUSED -> Icons.Outlined.Pause
+                        VideoRecordingEntity.RecordingStatus.RESUMED -> Icons.Outlined.Restore
+                        VideoRecordingEntity.RecordingStatus.RECORDING -> Icons.Outlined.FiberManualRecord
                     }
                     Icon(
                         statusIcon,

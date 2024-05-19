@@ -11,7 +11,6 @@ import work.wander.videoclip.data.recordings.entity.VideoRecordingEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -31,7 +30,7 @@ data class PreviousRecordingItem(
     fun durationFormatted(): String {
         val duration = durationInMillis.toDuration(DurationUnit.MILLISECONDS)
         return String.format(
-            "%02d:%02d:%02d:%03d",
+            DURATION_TIME_FORMAT,
             duration.inWholeHours,
             duration.inWholeMinutes % 60,
             duration.inWholeSeconds % 60,

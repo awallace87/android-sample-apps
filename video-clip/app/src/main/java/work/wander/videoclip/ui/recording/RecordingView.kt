@@ -59,7 +59,6 @@ import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.flow.StateFlow
 import work.wander.videoclip.ui.theme.AppTheme
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration
 
 @OptIn(ExperimentalPermissionsApi::class)
 @androidx.annotation.OptIn(ExperimentalGetImage::class)

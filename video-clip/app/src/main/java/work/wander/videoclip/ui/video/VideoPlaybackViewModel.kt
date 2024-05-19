@@ -15,10 +15,11 @@ import work.wander.videoclip.data.recordings.VideoRecordingsRepository
 import work.wander.videoclip.data.recordings.entity.VideoRecordingEntity
 import work.wander.videoclip.framework.annotation.BackgroundThread
 import work.wander.videoclip.framework.logging.AppLogger
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Date
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -31,8 +32,15 @@ sealed interface VideoPlaybackUiState {
         val videoRecordingEntity: VideoRecordingEntity
     ) : VideoPlaybackUiState {
         fun getTitleText(): String {
-            return FORMATTER.format(LocalDateTime.ofEpochSecond(TimeUnit.MILLISECONDS.toSeconds(videoRecordingEntity.timeCapturedEpochMillis), 0, ZoneOffset.UTC))
+            return FORMATTER.format(
+                LocalDateTime.ofEpochSecond(
+                    TimeUnit.MILLISECONDS.toSeconds(
+                        videoRecordingEntity.timeCapturedEpochMillis
+                    ), 0, ZoneOffset.UTC
+                )
+            )
         }
+
         companion object {
             const val DATE_FORMAT = "yyyy-MM-dd HH:mm"
             val FORMATTER = DateTimeFormatter.ofPattern(DATE_FORMAT)
@@ -44,13 +52,17 @@ sealed interface VideoPlaybackUiState {
 class VideoPlaybackViewModel @Inject constructor(
     private val exoPlayer: ExoPlayer,
     private val videoPlaybackRepository: VideoRecordingsRepository,
-    @BackgroundThread private val coroutineDispatcher: CoroutineDispatcher,
-    @MainThread private val coroutineDispatcherMain: CoroutineDispatcher,
+    @BackgroundThread private val backgroundDispatcher: CoroutineDispatcher,
+    @MainThread private val mainDispatcher: CoroutineDispatcher,
     private val appLogger: AppLogger,
 ) : ViewModel() {
 
     private val videoPlaybackUiState =
         MutableStateFlow<VideoPlaybackUiState>(VideoPlaybackUiState.Initial)
+
+    fun getVideoPlaybackUiState(): StateFlow<VideoPlaybackUiState> {
+        return videoPlaybackUiState
+    }
 
     fun setVideoId(videoRecordingId: Long) {
         if (videoRecordingId == NO_VIDEO_SPECIFIED) {
@@ -61,7 +73,7 @@ class VideoPlaybackViewModel @Inject constructor(
             videoPlaybackUiState.update {
                 VideoPlaybackUiState.LoadingMedia("Loading Data for Recording (${videoRecordingId})")
             }
-            viewModelScope.launch(coroutineDispatcher) {
+            viewModelScope.launch(backgroundDispatcher) {
                 val videoRecording = videoPlaybackRepository.getRecordingById(videoRecordingId)
                 if (videoRecording != null) {
                     appLogger.info("Video found for playback: ${videoRecording.videoFilePath}")
@@ -74,11 +86,21 @@ class VideoPlaybackViewModel @Inject constructor(
         }
     }
 
+    fun deleteVideoRecording(videoRecording: VideoRecordingEntity) {
+        viewModelScope.launch(backgroundDispatcher) {
+            val didDeleteVideo = Files.deleteIfExists(Paths.get(videoRecording.videoFilePath))
+            val didDeleteThumbnail =
+                Files.deleteIfExists(Paths.get(videoRecording.thumbnailFilePath))
+            videoPlaybackRepository.deleteRecording(videoRecording)
+            appLogger.info("Deleted Entity (${videoRecording.id}) - deleted video: $didDeleteVideo, deleted thumbnail: $didDeleteThumbnail")
+        }
+    }
+
     private fun loadRecordingIntoPlayer(videoRecording: VideoRecordingEntity) {
         videoPlaybackUiState.update { VideoPlaybackUiState.LoadingMedia("Loading ($videoRecording) for playback") }
         // ExoPlayer requires the media item to be set on the main thread
         // See: (https://developer.android.com/guide/topics/media/issues/player-accessed-on-wrong-thread)
-        viewModelScope.launch(coroutineDispatcherMain) {
+        viewModelScope.launch(mainDispatcher) {
             val videoFile = MediaItem.fromUri(videoRecording.videoFilePath)
             exoPlayer.playWhenReady = false
             exoPlayer.stop()
@@ -91,11 +113,6 @@ class VideoPlaybackViewModel @Inject constructor(
                 )
             }
         }
-    }
-
-
-    fun getVideoPlaybackUiState(): StateFlow<VideoPlaybackUiState> {
-        return videoPlaybackUiState
     }
 
     companion object {

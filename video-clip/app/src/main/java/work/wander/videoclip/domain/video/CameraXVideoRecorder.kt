@@ -26,6 +26,9 @@ import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
+/**
+ * CameraX focused/based implementation of [VideoRecorder].
+ */
 class CameraXVideoRecorder @Inject constructor(
     @ForVideoRecording private val videoRecordingDirectory: File,
     private val lifecycleCameraController: LifecycleCameraController,
@@ -194,9 +197,12 @@ class CameraXVideoRecorder @Inject constructor(
                                 recordingDurationMillis = TimeUnit.NANOSECONDS.toMillis(event.recordingStats.recordedDurationNanos)
                             )
                         }
+                        is RecorderState.RecordingStopping -> {
+                            appLogger.warn("Recording active from stopping, ignoring")
+                            currentState
+                        }
                         // Unexpected states
                         is RecorderState.RecordingPaused,
-                        is RecorderState.RecordingStopping,
                         is RecorderState.RecordingFinished,
                         is RecorderState.Error,
                         is RecorderState.Initializing,
@@ -237,8 +243,9 @@ class CameraXVideoRecorder @Inject constructor(
                 }
                 // Update Preview Image (only if recording was successful)
                 cameraXCoroutineScope.launch(backgroundDispatcher) {
+
                     val didCreateThumbnail =
-                        previewImageUpdater.createAndUpdatePreviewImageFor(videoRecordingEntity).await()
+                        previewImageUpdater.createAndUpdatePreviewImageFor(videoRecordingEntity.videoFilePath, videoRecordingEntity.id).await()
                     if (!didCreateThumbnail) {
                         appLogger.error("Failed to create thumbnail for video: ${videoRecordingEntity.videoFilePath}")
                     } else {

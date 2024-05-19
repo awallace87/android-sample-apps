@@ -6,14 +6,12 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -22,8 +20,18 @@ import work.wander.videoclip.domain.video.VideoRecorder
 import work.wander.videoclip.framework.camerax.CameraXManager
 import work.wander.videoclip.framework.camerax.ForCameraX
 import work.wander.videoclip.framework.logging.AppLogger
+import work.wander.videoclip.framework.toast.Toaster
 import javax.inject.Inject
 
+/**
+ * `CameraSelectionInfo` is a data class that represents the information about a camera device.
+ *
+ * @property displayText The text to be displayed for the camera device.
+ * @property cameraInfo The `CameraInfo` object that provides information about the camera device.
+ * @property cameraSelector The `CameraSelector` object that is used to select the camera device.
+ *
+ * The companion object `Unspecified` represents a default state where no specific camera device is selected.
+ */
 data class CameraSelectionInfo(
     val displayText: String,
     val cameraInfo: CameraInfo?,
@@ -56,13 +64,12 @@ class RecordingViewModel @Inject constructor(
     private val cameraXManager: CameraXManager,
     @ForCameraX private val cameraXCoroutineScope: CoroutineScope,
     private val videoRecorder: VideoRecorder,
+    private val toaster: Toaster,
     private val appLogger: AppLogger,
 ) : ViewModel() {
 
     private val selectedCameraDevice: MutableStateFlow<CameraSelectionInfo> =
         MutableStateFlow(CameraSelectionInfo.Unspecified)
-
-    val selectedCamera: StateFlow<CameraSelectionInfo> = selectedCameraDevice
 
     val availableCameras: StateFlow<List<CameraSelectionInfo>> = flow {
         var camNum = 0
@@ -120,7 +127,7 @@ class RecordingViewModel @Inject constructor(
                 appLogger.info("Recording started successfully")
             } else {
                 appLogger.error("Failed to start recording")
-                // TODO send Toast
+                toaster.showToast("Failed to start recording")
             }
         }
     }
