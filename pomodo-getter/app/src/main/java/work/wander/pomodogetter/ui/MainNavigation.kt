@@ -19,12 +19,19 @@ fun MainNavigation() {
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             val homeViewModel: HomeViewModel = hiltViewModel<HomeViewModel>()
-            val tasks = homeViewModel.tasks.collectAsState(emptyList()).value
+            val tasks = homeViewModel.tasks.collectAsState().value
             HomeView(
+                tasks = tasks,
                 modifier = Modifier.fillMaxSize(),
                 onNewTaskAdded = { taskName ->
                     homeViewModel.addNewTask(taskName)
                 },
+                onTaskCompletionChanged = { taskModel, taskCompletion ->
+                    homeViewModel.toggleTaskCompletion(taskModel.id, taskCompletion)
+                },
+                onSettingsSelected = {
+                    navController.navigate("settings")
+                }
             )
         }
         composable("settings") {
