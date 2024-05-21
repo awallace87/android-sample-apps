@@ -12,6 +12,7 @@ import work.wander.pomodogetter.data.tasks.TaskDataRepository
 import work.wander.pomodogetter.data.tasks.entity.TaskDataEntity
 import work.wander.pomodogetter.framework.annotation.BackgroundThread
 import work.wander.pomodogetter.framework.logging.AppLogger
+import java.time.LocalDate
 import javax.inject.Inject
 
 sealed interface TaskDetailUiState {
@@ -41,6 +42,33 @@ class TaskDetailViewModel @Inject constructor(
             } else {
                 _uiState.value = TaskDetailUiState.TaskNotFound
             }
+        }
+    }
+
+    fun onTaskNameChanged(taskName: String) {
+        if (_uiState.value is TaskDetailUiState.TaskDataLoaded) {
+            val taskDataEntity = (_uiState.value as TaskDetailUiState.TaskDataLoaded).taskDetail
+            val updatedTaskDataEntity = taskDataEntity.copy(name = taskName)
+            viewModelScope.launch(backgroundDispatcher) {
+                taskDataRepository.updateTask(updatedTaskDataEntity)
+                _uiState.value = TaskDetailUiState.TaskDataLoaded(updatedTaskDataEntity)
+            }
+        } else {
+            appLogger.warn("Task name changed from invalid state: ${_uiState.value}")
+        }
+    }
+
+    fun onDueDateChanged(dueDate: LocalDate?) {
+        if (_uiState.value is TaskDetailUiState.TaskDataLoaded) {
+            val taskDataEntity = (_uiState.value as TaskDetailUiState.TaskDataLoaded).taskDetail
+            val updatedTaskDataEntity = taskDataEntity.copy(dueDate = dueDate)
+            viewModelScope.launch(backgroundDispatcher) {
+                taskDataRepository.updateTask(updatedTaskDataEntity)
+                // TODO: Should handle this update with connected flows instead
+                _uiState.value = TaskDetailUiState.TaskDataLoaded(updatedTaskDataEntity)
+            }
+        } else {
+            appLogger.warn("Due date changed from invalid state: ${_uiState.value}")
         }
     }
 

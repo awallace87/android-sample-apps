@@ -1,5 +1,7 @@
 package work.wander.pomodogetter.ui.task
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,17 +10,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -31,11 +38,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import work.wander.pomodogetter.data.tasks.entity.TaskDataEntity
 import work.wander.pomodogetter.ui.theme.AppTheme
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
@@ -46,6 +57,8 @@ fun TaskDetailView(
     taskDetailUiState: TaskDetailUiState,
     modifier: Modifier = Modifier,
     onTaskDeleteClicked: () -> Unit = {},
+    onTaskDueDateSet: (LocalDate?) -> Unit = {},
+    onTaskNameChanged: (String) -> Unit = {},
     onBackClicked: () -> Unit = {},
 ) {
     Scaffold(
@@ -72,7 +85,9 @@ fun TaskDetailView(
                 is TaskDetailUiState.TaskDataLoaded -> {
                     TaskContents(
                         taskDataEntity = taskDetailUiState.taskDetail,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        onDueDateSet = { onTaskDueDateSet(it) },
+                        onNameChanged = { onTaskNameChanged(it) },
                     )
                 }
 
@@ -90,9 +105,16 @@ fun TaskDetailView(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskContents(taskDataEntity: TaskDataEntity, modifier: Modifier = Modifier, displayTaskDueDate: Boolean = false) {
+fun TaskContents(
+    taskDataEntity: TaskDataEntity,
+    modifier: Modifier = Modifier,
+    onDueDateSet: (LocalDate?) -> Unit = {},
+    onNameChanged: (String) -> Unit = {},
+    displayTaskDueDate: Boolean = false
+) {
     Column(modifier = modifier) {
         val nameTextFieldValue = remember { mutableStateOf(taskDataEntity.name) }
+        val keyboardController = LocalSoftwareKeyboardController.current
         OutlinedTextField(
             value = nameTextFieldValue.value,
             onValueChange = {
@@ -108,6 +130,17 @@ fun TaskContents(taskDataEntity: TaskDataEntity, modifier: Modifier = Modifier, 
                 disabledBorderColor = Color.Transparent,
                 errorBorderColor = Color.Transparent,
             ),
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done,
+                keyboardType = KeyboardType.Ascii,
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    onNameChanged(nameTextFieldValue.value)
+                    keyboardController?.hide()
+                }
+            )
+
         )
         val isEditingDueDate = remember { mutableStateOf(displayTaskDueDate) }
         // TODO Move to common UI component
@@ -127,6 +160,7 @@ fun TaskContents(taskDataEntity: TaskDataEntity, modifier: Modifier = Modifier, 
                     return year >= currentYear && year <= currentYear + 3
                 }
             },
+            initialDisplayMode = DisplayMode.Picker,
         )
         Row(
             modifier = Modifier
@@ -153,6 +187,57 @@ fun TaskContents(taskDataEntity: TaskDataEntity, modifier: Modifier = Modifier, 
                 state = datePickerState,
                 modifier = Modifier.padding(8.dp),
             )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                if (datePickerState.selectedDateMillis != taskDataEntity.dueDate?.atStartOfDay()
+                        ?.toInstant(ZoneOffset.UTC)?.toEpochMilli()
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            isEditingDueDate.value = false
+                            datePickerState.selectedDateMillis?.let {
+                                onDueDateSet(
+                                    Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault())
+                                        .toLocalDate()
+                                )
+                            }
+                        },
+                    ) {
+                        Text("Save Due Date")
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = { isEditingDueDate.value = false },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary,
+                        ),
+                        border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+                    ) {
+                        Text("Cancel Edit")
+                    }
+                }
+                if (taskDataEntity.dueDate != null) {
+                    Spacer(modifier = Modifier.width(16.dp))
+                    OutlinedButton(
+                        onClick = {
+                            isEditingDueDate.value = false
+                            onDueDateSet(null)
+                        },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.tertiary,
+                        ),
+                        border = BorderStroke(2.dp, MaterialTheme.colorScheme.tertiary),
+                    ) {
+                        Text("Clear Due Date")
+                    }
+                }
+            }
+
         }
     }
 }
@@ -236,12 +321,12 @@ fun TaskContentsDueDateEditPreview() {
                 name = "Task 1",
                 isCompleted = false,
                 createdAt = Instant.now(),
+                dueDate = LocalDate.now().plusWeeks(1)
             ),
             displayTaskDueDate = true
         )
     }
 }
-
 
 
 @Preview

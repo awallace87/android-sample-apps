@@ -75,6 +75,12 @@ fun MainNavigation() {
                 onBackClicked = {
                     navController.popBackStack()
                 },
+                onTaskDueDateSet = { dueDate ->
+                    taskDetailViewModel.onDueDateChanged(dueDate)
+                },
+                onTaskNameChanged = { taskName ->
+                    taskDetailViewModel.onTaskNameChanged(taskName)
+                },
                 onTaskDeleteClicked = {
                     taskDetailViewModel.onTaskDeleteSelected()
                     navController.popBackStack()

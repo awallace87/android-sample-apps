@@ -1,5 +1,6 @@
 package work.wander.pomodogetter.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -124,6 +126,10 @@ fun HomeViewContents(
 fun HomeViewWelcomeCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.primary,
+        ),
         content = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -134,6 +140,7 @@ fun HomeViewWelcomeCard(modifier: Modifier = Modifier) {
                     text = "Welcome to PomoDoGetter",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(8.dp),
+                    //color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -141,6 +148,7 @@ fun HomeViewWelcomeCard(modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp),
                     textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -152,6 +160,10 @@ fun HomeViewWelcomeCard(modifier: Modifier = Modifier) {
 fun HomeViewAddNewTaskCard(modifier: Modifier = Modifier, onNewTaskAdded: (String) -> Unit = {}) {
     Card(
         modifier = modifier,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.tertiary,
+        ),
         content = {
             Column(
                 modifier = Modifier
@@ -163,6 +175,7 @@ fun HomeViewAddNewTaskCard(modifier: Modifier = Modifier, onNewTaskAdded: (Strin
                     "Is there anything you need to do later?",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 8.dp),
+                    //color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 HomeAddNewTaskButton(onNewTaskAdded = onNewTaskAdded)
@@ -179,6 +192,10 @@ fun HomeViewTaskListCard(
 ) {
     Card(
         modifier = modifier,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.secondary,
+        ),
         content = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -186,9 +203,10 @@ fun HomeViewTaskListCard(
                 Text(
                     text = "Your Tasks",
                     modifier = Modifier
-                        .padding(4.dp)
+                        .padding(top = 8.dp, bottom = 4.dp)
                         .fillMaxWidth(),
-                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -207,6 +225,7 @@ fun HomeViewTaskListCard(
                     }
 
                 }
+                Spacer(modifier = Modifier.height(8.dp))
             }
         })
 }
@@ -221,8 +240,6 @@ fun HomeViewTaskListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.small)
-            .background(MaterialTheme.colorScheme.primaryContainer)
             .clickable { onTaskSelected() },
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -232,7 +249,7 @@ fun HomeViewTaskListItem(
             onCheckedChange = { onTaskCompletionChanged(it) },
             modifier = Modifier.size(40.dp),
             colors = CheckboxDefaults.colors(
-                checkedColor = MaterialTheme.colorScheme.primary,
+                checkedColor = MaterialTheme.colorScheme.secondary,
             )
         )
         Spacer(modifier = Modifier.width(20.dp))
@@ -240,7 +257,7 @@ fun HomeViewTaskListItem(
             text = task.name,
             modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.secondary,
             maxLines = 1,
         )
     }
@@ -287,9 +304,14 @@ fun HomeAddNewTaskButton(modifier: Modifier = Modifier, onNewTaskAdded: (String)
         } else {
             OutlinedButton(
                 onClick = { isAddingNewTask.value = true },
-                modifier = Modifier
+                modifier = Modifier,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary),
             ) {
-                Text("Add New Task")
+                Text(
+                    "Add New Task",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
             }
         }
 
