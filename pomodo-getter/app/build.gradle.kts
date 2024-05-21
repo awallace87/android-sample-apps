@@ -5,6 +5,7 @@ plugins {
     id("kotlin-kapt")
     alias(libs.plugins.daggerHiltAndroid)
     alias(libs.plugins.protoBufPlugin)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 android {
@@ -102,15 +103,14 @@ dependencies {
     implementation(libs.hilt.work)
     androidTestImplementation(libs.androidx.work.testing)
 
+    // Kotlin Serialization
+    implementation(libs.kotlin.serialization.json)
+
     // OkHttp
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.core)
     implementation(libs.okhttp.logging)
     testImplementation(libs.okhttp.mockwebserver)
-
-    // Moshi
-    implementation(libs.moshi.core)
-    implementation(libs.moshi.kotlin)
 
     // Picasso
     implementation(libs.picasso)

@@ -9,7 +9,7 @@ espressoCore = "3.5.1"
 lifecycleRuntimeKtx = "2.7.0"
 activityCompose = "1.9.0"
 composeBom = "2024.05.00"
-navCompose = "2.7.7"
+navCompose = "2.8.0-alpha08"
 room = "2.6.1"
 dagger = "2.51.1"
 hilt = "2.51.1"
@@ -28,6 +28,7 @@ truthAssert = "1.4.2"
 coilImage = "2.6.0"
 uiTextGoogleFonts = "1.6.7"
 accompanistPermissions = "0.23.1"
+kotlinSerializationJson = "1.6.3"
 
 # For Extended Material Icons
 materialIcons = "1.6.7"
@@ -107,6 +108,8 @@ material-icons-extended = { group = "androidx.compose.material", name = "materia
 # Accompanist Permissions
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanistPermissions" }
 
+# Kotlin Serialization
+kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerializationJson" }
 
 # Truth Assert
 truth-assert = { group = "com.google.truth", name = "truth", version.ref = "truthAssert" }
@@ -114,6 +117,7 @@ truth-assert = { group = "com.google.truth", name = "truth", version.ref = "trut
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlinKsp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 daggerHiltAndroid = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 protoBufPlugin = { id = "com.google.protobuf", version.ref = "protoBuf" }

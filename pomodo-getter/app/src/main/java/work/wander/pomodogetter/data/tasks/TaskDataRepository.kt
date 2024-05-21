@@ -16,6 +16,8 @@ interface TaskDataRepository {
 
     suspend fun updateTask(taskDataEntity: TaskDataEntity): Boolean
 
+    suspend fun deleteTaskById(taskId: Long): Boolean
+
 }
 
 class DefaultTaskDataRepository @Inject constructor(
@@ -45,6 +47,19 @@ class DefaultTaskDataRepository @Inject constructor(
             return false
         } else if (numRowsUpdated == 0) {
             appLogger.warn("No rows updated for task: $taskDataEntity. Task not found!")
+            return false
+        } else {
+            return true
+        }
+    }
+
+    override suspend fun deleteTaskById(taskId: Long): Boolean {
+        val numRowsDeleted = taskDatabase.taskDao().deleteTaskById(taskId)
+        if (numRowsDeleted > 1) {
+            appLogger.warn("More than one row ($numRowsDeleted) deleted for task: $taskId. Unexpected!")
+            return false
+        } else if (numRowsDeleted == 0) {
+            appLogger.warn("No rows deleted for task: $taskId. Task not found!")
             return false
         } else {
             return true
