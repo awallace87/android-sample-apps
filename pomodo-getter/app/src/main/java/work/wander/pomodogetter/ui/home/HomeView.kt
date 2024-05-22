@@ -66,6 +66,7 @@ fun HomeView(
     onNewTaskAdded: (String) -> Unit = {},
     onTaskSelected: (TaskUiModel) -> Unit = {},
     onTaskCompletionChanged: (TaskUiModel, Boolean) -> Unit = { _, _ -> },
+    onStartPomodoroSelected: () -> Unit = {},
     onSettingsSelected: () -> Unit = {},
 ) {
     Scaffold(
@@ -91,6 +92,7 @@ fun HomeView(
                 onNewTaskAdded = onNewTaskAdded,
                 onTaskSelected = onTaskSelected,
                 onTaskCompletionChanged = onTaskCompletionChanged,
+                onStartPomodoroSelected = onStartPomodoroSelected,
             )
         }
     }
@@ -103,6 +105,7 @@ fun HomeViewContents(
     onNewTaskAdded: (String) -> Unit = {},
     onTaskSelected: (TaskUiModel) -> Unit = {},
     onTaskCompletionChanged: (TaskUiModel, Boolean) -> Unit = { _, _ -> },
+    onStartPomodoroSelected: () -> Unit = {},
 ) {
     Column(
         modifier = modifier,
@@ -113,6 +116,12 @@ fun HomeViewContents(
             modifier = Modifier
                 .padding(8.dp)
                 .fillMaxWidth()
+        )
+        HomePomodoroTimerCard(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth(),
+            onStartPomodoroSelected = onStartPomodoroSelected,
         )
         HomeViewAddNewTaskCard(
             modifier = Modifier
@@ -372,7 +381,6 @@ fun HomeTopAppBar(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeFloatingActionButton(
     modifier: Modifier = Modifier,
@@ -453,7 +461,47 @@ fun HomeFloatingActionButton(
             )
         }
     }
+}
 
+@Composable
+fun HomePomodoroTimerCard(modifier: Modifier = Modifier, onStartPomodoroSelected: () -> Unit = {}) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.secondary,
+        ),
+        content = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "Ready to get started?",
+                    modifier = Modifier
+                        .padding(top = 16.dp, bottom = 4.dp)
+                        .fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        onStartPomodoroSelected()
+                    },
+                    modifier = Modifier.padding(bottom = 16.dp),
+                ) {
+                    Text(
+                        "Begin Pomodoro",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+
+                }
+            }
+        }
+    )
 }
 
 @Preview
@@ -607,6 +655,7 @@ private fun HomeFloatingActionButtonPreview() {
             HomeFloatingActionButton(
                 modifier = Modifier,
             )
+            Spacer(modifier = Modifier.height(16.dp))
             HomeFloatingActionButton(
                 modifier = Modifier,
                 isEditingNewTaskInitial = true
@@ -623,10 +672,19 @@ private fun HomeFloatingActionButtonDarkPreview() {
             HomeFloatingActionButton(
                 modifier = Modifier
             )
+            Spacer(modifier = Modifier.height(16.dp))
             HomeFloatingActionButton(
                 modifier = Modifier,
                 isEditingNewTaskInitial = true
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun HomePomodoroTimerCardPreview() {
+    AppTheme {
+        HomePomodoroTimerCard()
     }
 }

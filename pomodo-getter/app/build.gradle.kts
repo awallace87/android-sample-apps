@@ -58,12 +58,16 @@ android {
         generateStubs = true
         correctErrorTypes = true
     }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+        // Added to resolve build error involving multiple TypeConverter declarations (https://github.com/google/ksp/issues/1700)
+        arg("room.generateKotlin", "true")
+    }
 }
 
 dependencies {
 
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -71,6 +75,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.nav.compose)
+
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.extensions)
 
     // Room
     implementation(libs.androidx.room.runtime)

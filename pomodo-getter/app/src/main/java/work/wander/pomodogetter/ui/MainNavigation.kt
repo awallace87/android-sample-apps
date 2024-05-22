@@ -13,6 +13,8 @@ import kotlinx.serialization.Serializable
 import work.wander.pomodogetter.ui.home.HomeView
 import work.wander.pomodogetter.ui.home.HomeViewModel
 import work.wander.pomodogetter.ui.home.TaskUiModel
+import work.wander.pomodogetter.ui.pomodoro.PomodoroTimerScreenView
+import work.wander.pomodogetter.ui.pomodoro.PomodoroTimerScreenViewModel
 import work.wander.pomodogetter.ui.settings.ApplicationSettingsView
 import work.wander.pomodogetter.ui.settings.ApplicationSettingsViewModel
 import work.wander.pomodogetter.ui.task.TaskDetailView
@@ -23,6 +25,9 @@ object Home
 
 @Serializable
 object Settings
+
+@Serializable
+object PomodoroTimer
 
 @Serializable
 data class TaskDetail(val taskId: Long)
@@ -46,12 +51,15 @@ fun MainNavigation() {
                 onTaskSelected = { taskModel ->
                     navController.navigate(TaskDetail(taskModel.id))
                 },
+                onStartPomodoroSelected = {
+                    navController.navigate(PomodoroTimer)
+                },
                 onSettingsSelected = {
                     navController.navigate(Settings)
                 }
             )
         }
-        composable<Settings>{
+        composable<Settings> {
             val applicationSettingsViewModel: ApplicationSettingsViewModel =
                 hiltViewModel<ApplicationSettingsViewModel>()
             val applicationSettings =
@@ -85,6 +93,33 @@ fun MainNavigation() {
                     taskDetailViewModel.onTaskDeleteSelected()
                     navController.popBackStack()
                 }
+            )
+        }
+        composable<PomodoroTimer> {
+            val pomodoroTimerViewModel: PomodoroTimerScreenViewModel =
+                hiltViewModel<PomodoroTimerScreenViewModel>()
+
+            PomodoroTimerScreenView(
+                uiState = pomodoroTimerViewModel.uiState.collectAsState().value,
+                modifier = Modifier.fillMaxSize(),
+                onTimerDurationChange = { duration ->
+                    pomodoroTimerViewModel.setInitialDuration(duration)
+                },
+                onTimerReady = {
+                    pomodoroTimerViewModel.onTimerReady()
+                },
+                onTimerPause = {
+                    pomodoroTimerViewModel.pauseTimer()
+                },
+                onTimerResume = {
+                    pomodoroTimerViewModel.resumeTimer()
+                },
+                onTimerStart = {
+                    pomodoroTimerViewModel.startTimer()
+                },
+                onTimerCancel = {
+                    pomodoroTimerViewModel.cancelTimer()
+                },
             )
         }
     }

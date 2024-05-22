@@ -1,9 +1,9 @@
-package work.wander.pomodogetter.data.tasks
+package work.wander.pomodogetter.data.common.room.converters
 
 import androidx.room.TypeConverter
 import java.time.LocalDate
 
-class LocalDateConverter {
+object LocalDateConverter {
     @TypeConverter
     fun fromTimestamp(value: String?): LocalDate? {
         return value?.let { LocalDate.parse(it) }

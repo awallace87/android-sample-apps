@@ -1,9 +1,9 @@
-package work.wander.pomodogetter.data.tasks
+package work.wander.pomodogetter.data.common.room.converters
 
 import androidx.room.TypeConverter
 import java.time.Instant
 
-class InstantConverter {
+object InstantConverter {
 
     @TypeConverter
     fun fromInstant(value: Instant): Long {

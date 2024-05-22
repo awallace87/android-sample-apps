@@ -29,6 +29,7 @@ coilImage = "2.6.0"
 uiTextGoogleFonts = "1.6.7"
 accompanistPermissions = "0.23.1"
 kotlinSerializationJson = "1.6.3"
+lifecycleExtensions = "2.2.0"
 
 # For Extended Material Icons
 materialIcons = "1.6.7"
@@ -52,6 +53,7 @@ androidx-nav-compose = { group = "androidx.navigation", name = "navigation-compo
 
 # Lifecycle
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-lifecycle-extensions = { group = "androidx.lifecycle", name = "lifecycle-extensions", version.ref = "lifecycleExtensions" }
 
 # Room
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
