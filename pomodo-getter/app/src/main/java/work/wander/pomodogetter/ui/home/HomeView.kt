@@ -21,6 +21,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Alarm
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
@@ -29,6 +30,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import work.wander.pomodogetter.ui.theme.AppTheme
 import work.wander.pomogogetter.R
+import java.time.LocalDate
 
 @Composable
 fun HomeView(
@@ -240,6 +243,13 @@ fun HomeViewTaskListCard(
                             onTaskSelected = { onTaskSelected(taskModel) },
                             onTaskCompletionChanged = { onTaskCompletionChanged(taskModel, it) }
                         )
+                        if (taskIndex < tasks.size - 1) {
+                            HorizontalDivider(
+                                modifier = Modifier
+                                    .padding(top = 4.dp, start = 24.dp, end = 24.dp),
+                                thickness = 2.dp,
+                            )
+                        }
                     }
 
                 }
@@ -273,11 +283,29 @@ fun HomeViewTaskListItem(
         Spacer(modifier = Modifier.width(20.dp))
         Text(
             text = task.name,
-            modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
+            modifier = Modifier
+                .padding(top = 8.dp, bottom = 8.dp)
+                .weight(1f),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.secondary,
             maxLines = 1,
         )
+        if (task.dueDate != null) {
+            Icon(
+                imageVector = Icons.Outlined.Alarm,
+                contentDescription = "Due Date",
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.secondary,
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = task.dueDate.toString(),
+                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp, end = 16.dp),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.secondary,
+                maxLines = 1,
+            )
+        }
     }
 }
 
@@ -602,13 +630,23 @@ private fun HomeViewTaskListCardPreview() {
 @Composable
 private fun HomeViewTaskListItemPreview() {
     AppTheme {
-        HomeViewTaskListItem(
-            task = TaskUiModel(
-                id = 1,
-                name = "Task 1",
-                isCompleted = false
+        Column {
+            HomeViewTaskListItem(
+                task = TaskUiModel(
+                    id = 1,
+                    name = "Task 1",
+                    isCompleted = false
+                )
             )
-        )
+            HomeViewTaskListItem(
+                task = TaskUiModel(
+                    id = 2,
+                    name = "Task 2",
+                    isCompleted = true,
+                    dueDate = LocalDate.now().plusDays(1)
+                )
+            )
+        }
     }
 }
 
@@ -616,13 +654,23 @@ private fun HomeViewTaskListItemPreview() {
 @Composable
 private fun HomeViewTaskListItemDarkPreview() {
     AppTheme(darkTheme = true) {
-        HomeViewTaskListItem(
-            task = TaskUiModel(
-                id = 1,
-                name = "Task 1",
-                isCompleted = false
+        Column {
+            HomeViewTaskListItem(
+                task = TaskUiModel(
+                    id = 1,
+                    name = "Task 1",
+                    isCompleted = false
+                )
             )
-        )
+            HomeViewTaskListItem(
+                task = TaskUiModel(
+                    id = 2,
+                    name = "Task 2",
+                    isCompleted = true,
+                    dueDate = LocalDate.now().plusDays(1)
+                )
+            )
+        }
     }
 }
 

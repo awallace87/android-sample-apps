@@ -177,7 +177,8 @@ class PomodoroTimerService : LifecycleService() {
     private fun createAndRegisterNotificationChannel() {
         val name = NOTIFICATION_CHANNEL_NAME
         val descriptionText = "Pomodoro Timer"
-        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        // Setting to Low to avoid incessant sound and vibration
+        val importance = NotificationManager.IMPORTANCE_LOW
         val channel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance).apply {
             description = descriptionText
         }
@@ -187,13 +188,13 @@ class PomodoroTimerService : LifecycleService() {
     companion object {
         // TODO hide values as internal or private as needed
         const val NOTIFICATION_ID = 1
-        const val ACTION_RESET = "com.goldenpounce.valencia.service.pomodoro.RESET"
-        const val ACTION_START = "com.goldenpounce.valencia.service.pomodoro.START"
-        const val ACTION_PAUSE = "com.goldenpounce.valencia.service.pomodoro.PAUSE"
-        const val ACTION_RESUME = "com.goldenpounce.valencia.service.pomodoro.RESUME"
-        const val ACTION_STOP = "com.goldenpounce.valencia.service.pomodoro.STOP"
+        const val ACTION_RESET = "work.wander.pomodogetter.service.pomodoro.RESET"
+        const val ACTION_START = "work.wander.pomodogetter.service.pomodoro.START"
+        const val ACTION_PAUSE = "work.wander.pomodogetter.service.pomodoro.PAUSE"
+        const val ACTION_RESUME = "work.wander.pomodogetter.service.pomodoro.RESUME"
+        const val ACTION_STOP = "work.wander.pomodogetter.service.pomodoro.STOP"
 
-        const val EXTRA_DURATION_MILLIS = "com.goldenpounce.valencia.service.pomodoro.EXTRA_DURATION_MILLIS"
+        const val EXTRA_DURATION_MILLIS = "work.wander.pomodogetter.service.pomodoro.EXTRA_DURATION_MILLIS"
 
         const val NOTIFICATION_CHANNEL_ID = "PomodoroTimerServiceChannel"
         const val NOTIFICATION_CHANNEL_NAME = "Pomodoro Timer"

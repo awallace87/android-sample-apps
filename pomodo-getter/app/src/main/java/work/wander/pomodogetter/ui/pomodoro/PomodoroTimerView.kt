@@ -24,7 +24,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,7 +50,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 @Composable
-fun PomodoroTimerScreenView(
+fun PomodoroTimerView(
     uiState: PomodoroTimerUiState,
     modifier: Modifier = Modifier,
     onTimerReady: () -> Unit = {},
@@ -74,7 +73,7 @@ fun PomodoroTimerScreenView(
 
                 when (uiState) {
                     is PomodoroTimerUiState.Initial -> {
-                        InitialTimerScreenView(
+                        InitialTimerView(
                             modifier = Modifier
                                 .fillMaxSize()
                         )
@@ -83,7 +82,7 @@ fun PomodoroTimerScreenView(
                     }
 
                     is PomodoroTimerUiState.Running -> {
-                        RunningTimerScreenView(
+                        RunningTimerView(
                             uiState = uiState,
                             modifier = Modifier.fillMaxSize(),
                             timerPaused = onTimerPause,
@@ -92,7 +91,7 @@ fun PomodoroTimerScreenView(
                     }
 
                     is PomodoroTimerUiState.Paused -> {
-                        PausedTimerScreenView(
+                        PausedTimerView(
                             uiState,
                             Modifier.fillMaxSize(),
                             onTimerResume,
@@ -100,13 +99,13 @@ fun PomodoroTimerScreenView(
                         )
                     }
 
-                    is PomodoroTimerUiState.Completed -> CompletedTimeScreenView(
+                    is PomodoroTimerUiState.Completed -> CompletedTimerView(
                         uiState,
                         Modifier.fillMaxSize(),
                         onTimerReady
                     )
 
-                    is PomodoroTimerUiState.Ready -> ReadyTimerScreenView(
+                    is PomodoroTimerUiState.Ready -> ReadyTimerView(
                         uiState,
                         Modifier.fillMaxSize(),
                         onTimerStart,
@@ -121,7 +120,7 @@ fun PomodoroTimerScreenView(
 
 
 @Composable
-fun ReadyTimerScreenView(
+fun ReadyTimerView(
     uiState: PomodoroTimerUiState.Ready,
     modifier: Modifier,
     onTimerStart: () -> Unit = {},
@@ -178,7 +177,7 @@ fun ReadyTimerScreenView(
 }
 
 @Composable
-fun CompletedTimeScreenView(
+fun CompletedTimerView(
     uiState: PomodoroTimerUiState.Completed,
     modifier: Modifier = Modifier,
     onTimerReady: () -> Unit = {}
@@ -205,7 +204,7 @@ fun CompletedTimeScreenView(
 }
 
 @Composable
-fun PausedTimerScreenView(
+fun PausedTimerView(
     uiState: PomodoroTimerUiState.Paused,
     modifier: Modifier = Modifier,
     onTimerResume: () -> Unit = {},
@@ -250,7 +249,7 @@ fun PausedTimerScreenView(
 }
 
 @Composable
-fun RunningTimerScreenView(
+fun RunningTimerView(
     uiState: PomodoroTimerUiState.Running,
     modifier: Modifier = Modifier,
     timerPaused: () -> Unit = {},
@@ -298,7 +297,7 @@ fun RunningTimerScreenView(
 }
 
 @Composable
-fun InitialTimerScreenView(modifier: Modifier) {
+fun InitialTimerView(modifier: Modifier) {
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
@@ -492,9 +491,9 @@ fun TimerDurationSelector(
 // TODO create previews for other states
 @Composable
 @Preview(showBackground = true)
-fun PomodoroTimerScreenViewPreview() {
+fun PomodoroTimerViewPreview() {
     AppTheme {
-        PomodoroTimerScreenView(
+        PomodoroTimerView(
             uiState = PomodoroTimerUiState.Initial,
             modifier = Modifier.fillMaxSize()
         )
@@ -503,9 +502,9 @@ fun PomodoroTimerScreenViewPreview() {
 
 @Composable
 @Preview(showBackground = true)
-fun RunningTimerScreenViewPreview() {
+fun RunningTimerViewPreview() {
     AppTheme {
-        RunningTimerScreenView(
+        RunningTimerView(
             uiState = PomodoroTimerUiState.Running(
                 totalDuration = 25.minutes,
                 remainingDuration = 16.minutes,
@@ -517,9 +516,9 @@ fun RunningTimerScreenViewPreview() {
 
 @Composable
 @Preview(showBackground = true)
-fun PausedTimerScreenViewPreview() {
+fun PausedTimerViewPreview() {
     AppTheme {
-        PausedTimerScreenView(
+        PausedTimerView(
             uiState = PomodoroTimerUiState.Paused(
                 totalDuration = 25.minutes,
                 remainingDuration = 16.minutes,
@@ -531,9 +530,9 @@ fun PausedTimerScreenViewPreview() {
 
 @Composable
 @Preview(showBackground = true)
-fun CompletedTimeScreenViewPreview() {
+fun CompletedTimerViewPreview() {
     AppTheme {
-        CompletedTimeScreenView(
+        CompletedTimerView(
             uiState = PomodoroTimerUiState.Completed(
                 totalDuration = 25.minutes,
             ),
@@ -544,9 +543,9 @@ fun CompletedTimeScreenViewPreview() {
 
 @Composable
 @Preview(showBackground = true)
-fun ReadyTimerScreenViewPreview() {
+fun ReadyTimerViewPreview() {
     AppTheme {
-        ReadyTimerScreenView(
+        ReadyTimerView(
             uiState = PomodoroTimerUiState.Ready(
                 initialDuration = 25.minutes,
             ),

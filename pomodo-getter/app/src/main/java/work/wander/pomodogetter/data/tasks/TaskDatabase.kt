@@ -7,6 +7,9 @@ import work.wander.pomodogetter.data.common.room.converters.InstantConverter
 import work.wander.pomodogetter.data.common.room.converters.LocalDateConverter
 import work.wander.pomodogetter.data.tasks.entity.TaskDataEntity
 
+/**
+ * The Room database for Task data.
+ */
 @Database(entities = [TaskDataEntity::class], version = 1, exportSchema = false)
 @TypeConverters(value = [InstantConverter::class, LocalDateConverter::class])
 abstract class TaskDatabase : RoomDatabase() {

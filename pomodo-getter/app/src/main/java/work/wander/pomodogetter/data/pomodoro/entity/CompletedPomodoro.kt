@@ -5,6 +5,9 @@ import androidx.room.PrimaryKey
 import java.time.Instant
 import kotlin.time.Duration
 
+/**
+ * Represents a completed pomodoro.
+ */
 @Entity(tableName = "completed_pomodoros")
 data class CompletedPomodoro(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

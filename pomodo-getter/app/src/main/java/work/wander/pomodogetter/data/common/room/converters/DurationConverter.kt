@@ -3,6 +3,9 @@ package work.wander.pomodogetter.data.common.room.converters
 import androidx.room.TypeConverter
 import kotlin.time.Duration
 
+/**
+ * Converts a [Duration] to a [String] and vice versa.
+ */
 object DurationConverter {
 
     @TypeConverter

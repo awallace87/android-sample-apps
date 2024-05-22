@@ -3,6 +3,9 @@ package work.wander.pomodogetter.data.common.room.converters
 import androidx.room.TypeConverter
 import java.time.Instant
 
+/**
+ * Converts an [Instant] to a [Long] and vice versa.
+ */
 object InstantConverter {
 
     @TypeConverter

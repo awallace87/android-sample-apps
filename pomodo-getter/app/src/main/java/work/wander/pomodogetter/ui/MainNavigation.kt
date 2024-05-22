@@ -12,8 +12,7 @@ import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import work.wander.pomodogetter.ui.home.HomeView
 import work.wander.pomodogetter.ui.home.HomeViewModel
-import work.wander.pomodogetter.ui.home.TaskUiModel
-import work.wander.pomodogetter.ui.pomodoro.PomodoroTimerScreenView
+import work.wander.pomodogetter.ui.pomodoro.PomodoroTimerView
 import work.wander.pomodogetter.ui.pomodoro.PomodoroTimerScreenViewModel
 import work.wander.pomodogetter.ui.settings.ApplicationSettingsView
 import work.wander.pomodogetter.ui.settings.ApplicationSettingsViewModel
@@ -99,7 +98,7 @@ fun MainNavigation() {
             val pomodoroTimerViewModel: PomodoroTimerScreenViewModel =
                 hiltViewModel<PomodoroTimerScreenViewModel>()
 
-            PomodoroTimerScreenView(
+            PomodoroTimerView(
                 uiState = pomodoroTimerViewModel.uiState.collectAsState().value,
                 modifier = Modifier.fillMaxSize(),
                 onTimerDurationChange = { duration ->

@@ -8,6 +8,9 @@ import work.wander.pomodogetter.data.common.room.converters.InstantConverter
 import work.wander.pomodogetter.data.pomodoro.entity.CompletedPomodoro
 import work.wander.pomodogetter.data.pomodoro.entity.InProgressPomodoro
 
+/**
+ * The Room database for Pomodoro data.
+ */
 @Database(
     entities = [CompletedPomodoro::class, InProgressPomodoro::class],
     version = 1,

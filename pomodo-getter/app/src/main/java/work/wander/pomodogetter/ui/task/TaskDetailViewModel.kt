@@ -1,6 +1,5 @@
 package work.wander.pomodogetter.ui.task
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,13 +14,19 @@ import work.wander.pomodogetter.framework.logging.AppLogger
 import java.time.LocalDate
 import javax.inject.Inject
 
+/**
+ * UI state for the task detail screen.
+ */
 sealed interface TaskDetailUiState {
-    object Initial : TaskDetailUiState
+    data object Initial : TaskDetailUiState
     data class Loading(val taskId: Long) : TaskDetailUiState
     data class TaskDataLoaded(val taskDetail: TaskDataEntity) : TaskDetailUiState
-    object TaskNotFound : TaskDetailUiState
+    data object TaskNotFound : TaskDetailUiState
 }
 
+/**
+ * ViewModel for the task detail screen.
+ */
 @HiltViewModel
 class TaskDetailViewModel @Inject constructor(
     private val taskDataRepository: TaskDataRepository,

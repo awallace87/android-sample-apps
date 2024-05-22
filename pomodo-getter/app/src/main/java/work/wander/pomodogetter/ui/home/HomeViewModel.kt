@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import work.wander.pomodogetter.data.tasks.TaskDataRepository
 import work.wander.pomodogetter.framework.annotation.BackgroundThread
 import work.wander.pomodogetter.framework.logging.AppLogger
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -57,5 +58,6 @@ class HomeViewModel @Inject constructor(
 data class TaskUiModel(
     val id: Long,
     val name: String,
-    val isCompleted: Boolean
+    val isCompleted: Boolean,
+    val dueDate: LocalDate? = null,
 )

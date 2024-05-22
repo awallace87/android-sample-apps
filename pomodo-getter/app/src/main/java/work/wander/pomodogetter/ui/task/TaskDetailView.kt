@@ -52,6 +52,16 @@ import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 
 
+/**
+ * `TaskDetailView` is a composable function that displays the details of a task.
+ *
+ * @param taskDetailUiState The state of the task detail view.
+ * @param modifier The modifier to be applied to the layout. Default is `Modifier`.
+ * @param onTaskDeleteClicked The lambda function to be called when the delete task button is clicked. Default is an empty lambda.
+ * @param onTaskDueDateSet The lambda function to be called when the due date of the task is set. Default is an empty lambda.
+ * @param onTaskNameChanged The lambda function to be called when the name of the task is changed. Default is an empty lambda.
+ * @param onBackClicked The lambda function to be called when the back button is clicked. Default is an empty lambda.
+ */
 @Composable
 fun TaskDetailView(
     taskDetailUiState: TaskDetailUiState,
