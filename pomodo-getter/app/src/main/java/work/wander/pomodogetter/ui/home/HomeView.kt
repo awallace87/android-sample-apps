@@ -20,17 +20,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -69,6 +73,11 @@ fun HomeView(
         topBar = {
             HomeTopAppBar(onSettingsSelected = onSettingsSelected)
         },
+        floatingActionButton = {
+            HomeFloatingActionButton(
+                onNewTaskAdded = onNewTaskAdded
+            )
+        }
     ) {
         Box(
             modifier = Modifier
@@ -359,9 +368,92 @@ fun HomeTopAppBar(
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
-        }
-
+        },
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeFloatingActionButton(
+    modifier: Modifier = Modifier,
+    onNewTaskAdded: (String) -> Unit = {},
+    isEditingNewTaskInitial: Boolean = false,
+) {
+    val isEditingNewTask = remember { mutableStateOf(isEditingNewTaskInitial) }
+    if (isEditingNewTask.value) {
+        Row(
+            modifier = modifier
+                .padding(start = 30.dp, bottom = 16.dp)
+                .clip(MaterialTheme.shapes.large)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            val newTaskName = remember { mutableStateOf("") }
+            val focusRequester = remember { FocusRequester() }
+            val keyboardController = LocalSoftwareKeyboardController.current
+
+            LaunchedEffect(Unit) {
+                delay(50)
+                focusRequester.requestFocus()
+            }
+
+            OutlinedTextField(
+                value = newTaskName.value,
+                onValueChange = { newTaskName.value = it },
+                modifier = Modifier
+                    .padding(16.dp)
+                    .focusRequester(focusRequester),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    disabledBorderColor = MaterialTheme.colorScheme.tertiary,
+                    errorBorderColor = MaterialTheme.colorScheme.error,
+                ),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done,
+                    keyboardType = KeyboardType.Ascii
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyboardController?.hide()
+                        focusRequester.freeFocus()
+                        onNewTaskAdded(newTaskName.value)
+                        isEditingNewTask.value = false
+                    }
+                )
+            )
+            IconButton(
+                onClick = {
+                    isEditingNewTask.value = false
+                    newTaskName.value = ""
+                },
+                modifier = Modifier.padding(end = 8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Cancel,
+                    contentDescription = "Cancel Adding New Task",
+                    modifier = Modifier.size(36.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+    } else {
+        FloatingActionButton(
+            onClick = { isEditingNewTask.value = true },
+            modifier = modifier
+                .size(56.dp)
+                .clip(MaterialTheme.shapes.large),
+            contentColor = MaterialTheme.colorScheme.primary,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Add,
+                contentDescription = "Add New Task",
+                modifier = Modifier.size(32.dp),
+            )
+        }
+    }
+
 }
 
 @Preview
@@ -504,5 +596,37 @@ private fun HomeAddNewTaskButtonPreview() {
 private fun HomeTopAppBarPreview() {
     AppTheme {
         HomeTopAppBar()
+    }
+}
+
+@Preview
+@Composable
+private fun HomeFloatingActionButtonPreview() {
+    AppTheme {
+        Column {
+            HomeFloatingActionButton(
+                modifier = Modifier,
+            )
+            HomeFloatingActionButton(
+                modifier = Modifier,
+                isEditingNewTaskInitial = true
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun HomeFloatingActionButtonDarkPreview() {
+    AppTheme(darkTheme = true) {
+        Column {
+            HomeFloatingActionButton(
+                modifier = Modifier
+            )
+            HomeFloatingActionButton(
+                modifier = Modifier,
+                isEditingNewTaskInitial = true
+            )
+        }
     }
 }
