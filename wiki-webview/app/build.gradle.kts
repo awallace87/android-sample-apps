@@ -120,6 +120,11 @@ dependencies {
     implementation(libs.okhttp.logging)
     testImplementation(libs.okhttp.mockwebserver)
 
+    // Retrofit
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.serialization)
+    implementation(libs.retrofit.scalars)
+
     // Picasso
     implementation(libs.picasso)
 
@@ -135,6 +140,13 @@ dependencies {
 
     // Material Extended Icons
     implementation(libs.material.icons.extended)
+
+    // Adaptive Material 3
+    implementation(libs.androidx.material3.adaptive.navigation.suite.core)
+    implementation(libs.androidx.material3.adaptive.navigation.suite.android)
+    implementation(libs.androidx.material3.adaptive.core)
+    implementation(libs.androidx.material3.adaptive.android)
+    implementation(libs.androidx.material3.adaptive.navigation)
 
     // Testing Core
     testImplementation(libs.junit)

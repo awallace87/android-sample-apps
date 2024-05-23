@@ -1,48 +1,39 @@
 package work.wander.wikiview.ui.home
 
-import androidx.compose.foundation.BorderStroke
+import android.webkit.WebView
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.Top
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Alarm
-import androidx.compose.material.icons.outlined.Cancel
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.ImageNotSupported
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -54,636 +45,344 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import work.wander.wikiview.R
 import work.wander.wikiview.ui.theme.AppTheme
-import java.time.LocalDate
 
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun HomeView(
-    tasks: List<TaskUiModel>,
+    searchResults: List<SearchResultItem>,
+    detailUiState: StateFlow<HomeDetailUiState>,
     modifier: Modifier = Modifier,
-    onNewTaskAdded: (String) -> Unit = {},
-    onTaskSelected: (TaskUiModel) -> Unit = {},
-    onTaskCompletionChanged: (TaskUiModel, Boolean) -> Unit = { _, _ -> },
-    onStartPomodoroSelected: () -> Unit = {},
+    onSearchRequested: (String) -> Unit = {},
+    onSearchResultSelected: (SearchResultItem) -> Unit = {},
     onSettingsSelected: () -> Unit = {},
 ) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            HomeTopAppBar(onSettingsSelected = onSettingsSelected)
-        },
-        floatingActionButton = {
-            HomeFloatingActionButton(
-                onNewTaskAdded = onNewTaskAdded
-            )
-        }
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it)
-        ) {
-            HomeViewContents(
-                tasks = tasks,
-                modifier = Modifier
-                    .fillMaxSize(),
-                onNewTaskAdded = onNewTaskAdded,
-                onTaskSelected = onTaskSelected,
-                onTaskCompletionChanged = onTaskCompletionChanged,
-                onStartPomodoroSelected = onStartPomodoroSelected,
-            )
-        }
-    }
-}
+    val navigator = rememberListDetailPaneScaffoldNavigator<SearchResultItem>()
 
-@Composable
-fun HomeViewContents(
-    tasks: List<TaskUiModel>,
-    modifier: Modifier = Modifier,
-    onNewTaskAdded: (String) -> Unit = {},
-    onTaskSelected: (TaskUiModel) -> Unit = {},
-    onTaskCompletionChanged: (TaskUiModel, Boolean) -> Unit = { _, _ -> },
-    onStartPomodoroSelected: () -> Unit = {},
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Top
-    ) {
-        HomeViewWelcomeCard(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth()
-        )
-        HomePomodoroTimerCard(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(),
-            onStartPomodoroSelected = onStartPomodoroSelected,
-        )
-        HomeViewAddNewTaskCard(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(),
-            onNewTaskAdded = onNewTaskAdded,
-        )
-        HomeViewTaskListCard(
-            tasks = tasks,
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(),
-            onTaskSelected = onTaskSelected,
-            onTaskCompletionChanged = onTaskCompletionChanged,
-        )
+    BackHandler(navigator.canNavigateBack()) {
+        navigator.navigateBack()
     }
-}
 
-@Composable
-fun HomeViewWelcomeCard(modifier: Modifier = Modifier) {
-    Card(
+    ListDetailPaneScaffold(
         modifier = modifier,
-        colors = CardDefaults.cardColors().copy(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.primary,
-        ),
-        content = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Welcome to PomoDoGetter",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(8.dp),
-                    //color = MaterialTheme.colorScheme.primary,
+        directive = navigator.scaffoldDirective,
+        value = navigator.scaffoldValue,
+        listPane = {
+            AnimatedPane {
+                HomeListPaneContents(
+                    searchResults = searchResults,
+                    onResultSelected = {
+                        onSearchResultSelected(it)
+                        navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
+                    },
+                    onSearchRequested = onSearchRequested,
+                    onSettingsSelected = onSettingsSelected
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Get things done with the Pomodoro Technique, and track your progress with PomoDoGetter!",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
             }
-        }
+
+        },
+        detailPane = {
+            AnimatedPane {
+                navigator.currentDestination?.content?.let { searchResult ->
+                    HomeDetailPaneContents(
+                        detailUiState = detailUiState,
+                        selectedSearchResult = searchResult
+                    )
+                } ?: Text(text = "Detail destination not selected")
+            }
+        },
     )
 }
 
 @Composable
-fun HomeViewAddNewTaskCard(modifier: Modifier = Modifier, onNewTaskAdded: (String) -> Unit = {}) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors().copy(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-            contentColor = MaterialTheme.colorScheme.tertiary,
-        ),
-        content = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    "Is there anything you need to do later?",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 8.dp),
-                    //color = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                HomeAddNewTaskButton(onNewTaskAdded = onNewTaskAdded)
-            }
-        })
-}
-
-@Composable
-fun HomeViewTaskListCard(
-    tasks: List<TaskUiModel>,
+fun HomeListPaneContents(
+    searchResults: List<SearchResultItem>,
     modifier: Modifier = Modifier,
-    onTaskSelected: (TaskUiModel) -> Unit = {},
-    onTaskCompletionChanged: (TaskUiModel, Boolean) -> Unit = { _, _ -> },
+    onResultSelected: (SearchResultItem) -> Unit = {},
+    onSearchRequested: (String) -> Unit = {},
+    onSettingsSelected: () -> Unit = {},
 ) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors().copy(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.secondary,
-        ),
-        content = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = "Your Tasks",
-                    modifier = Modifier
-                        .padding(top = 8.dp, bottom = 4.dp)
-                        .fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.secondary,
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(tasks.size) { taskIndex ->
-                        val taskModel = tasks[taskIndex]
-                        HomeViewTaskListItem(
-                            task = taskModel,
-                            onTaskSelected = { onTaskSelected(taskModel) },
-                            onTaskCompletionChanged = { onTaskCompletionChanged(taskModel, it) }
-                        )
-                        if (taskIndex < tasks.size - 1) {
-                            HorizontalDivider(
-                                modifier = Modifier
-                                    .padding(top = 4.dp, start = 24.dp, end = 24.dp),
-                                thickness = 2.dp,
-                            )
-                        }
-                    }
-
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-        })
-}
-
-@Composable
-fun HomeViewTaskListItem(
-    task: TaskUiModel,
-    modifier: Modifier = Modifier,
-    onTaskSelected: () -> Unit = {},
-    onTaskCompletionChanged: (Boolean) -> Unit = {},
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onTaskSelected() },
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Top,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(modifier = Modifier.width(12.dp))
-        Checkbox(
-            checked = task.isCompleted,
-            onCheckedChange = { onTaskCompletionChanged(it) },
-            modifier = Modifier.size(40.dp),
-            colors = CheckboxDefaults.colors(
-                checkedColor = MaterialTheme.colorScheme.secondary,
-            )
-        )
-        Spacer(modifier = Modifier.width(20.dp))
-        Text(
-            text = task.name,
+        HomeTopAppBar(
             modifier = Modifier
-                .padding(top = 8.dp, bottom = 8.dp)
-                .weight(1f),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.secondary,
-            maxLines = 1,
+                .fillMaxWidth(),
+            onSearchRequested = onSearchRequested,
+            onSettingsSelected = onSettingsSelected
         )
-        if (task.dueDate != null) {
-            Icon(
-                imageVector = Icons.Outlined.Alarm,
-                contentDescription = "Due Date",
-                modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.secondary,
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = task.dueDate.toString(),
-                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp, end = 16.dp),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.secondary,
-                maxLines = 1,
-            )
+        if (searchResults.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Text(
+                    "No search results",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(searchResults.size) { searchResultIndex ->
+                    val searchResult = searchResults[searchResultIndex]
+                    HomeSearchResultItemView(
+                        searchResult = searchResult,
+                        modifier = Modifier.fillMaxWidth(),
+                        onSelected = {
+                            onResultSelected(searchResult)
+                        }
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-fun HomeAddNewTaskButton(modifier: Modifier = Modifier, onNewTaskAdded: (String) -> Unit = {}) {
+fun HomeSearchResultItemView(
+    searchResult: SearchResultItem,
+    modifier: Modifier = Modifier,
+    onSelected: () -> Unit = {},
+) {
     Row(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.small),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        val isAddingNewTask = remember { mutableStateOf(false) }
-
-        if (isAddingNewTask.value) {
-            val newTaskName = remember { mutableStateOf("") }
-            val focusRequester = remember { FocusRequester() }
-            val keyboardController = LocalSoftwareKeyboardController.current
-
-            LaunchedEffect(Unit) {
-                delay(100)
-                focusRequester.requestFocus()
-            }
-
-            OutlinedTextField(
-                value = newTaskName.value,
-                onValueChange = { newTaskName.value = it },
-                modifier = Modifier
-                    .focusRequester(focusRequester),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done,
-                    keyboardType = KeyboardType.Ascii
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        keyboardController?.hide()
-                        focusRequester.freeFocus()
-                        onNewTaskAdded(newTaskName.value)
-                        isAddingNewTask.value = false
-                    }
-                )
+        val headerImageSize = 48.dp
+        if (searchResult.thumbnailImageUrl != null) {
+            Image(
+                painter = painterResource(id = R.drawable.app_icon),
+                contentDescription = "Thumbnail",
+                modifier = Modifier.size(headerImageSize)
             )
         } else {
-            OutlinedButton(
-                onClick = { isAddingNewTask.value = true },
-                modifier = Modifier,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary),
-            ) {
-                Text(
-                    "Add New Task",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
+            Icon(
+                Icons.Outlined.ImageNotSupported,
+                modifier = Modifier.size(headerImageSize),
+                contentDescription = "Thumbnail",
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+        }
+        Text(
+            searchResult.title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.weight(0.5f)
+        )
+        Text(
+            searchResult.description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.weight(0.5f)
+        )
+        IconButton(onClick = {
+            onSelected()
+        }) {
+            Icon(
+                Icons.AutoMirrored.Outlined.ArrowForward,
+                modifier = Modifier.size(32.dp),
+                contentDescription = "Settings",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+// TODO: Find more proper way to avoid re-composition of the same page contents
+@Composable
+fun HomeDetailPaneContents(
+    selectedSearchResult: SearchResultItem,
+    detailUiState: StateFlow<HomeDetailUiState>,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Top,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        val detailState = detailUiState.collectAsState().value
+        when (detailState) {
+            is HomeDetailUiState.Initial -> {
+                Text("Select a search result to view details")
+            }
+
+            is HomeDetailUiState.Loading -> {
+                Text("Loading details for ${selectedSearchResult.title}")
+            }
+
+            is HomeDetailUiState.Success -> {
+                Text(detailState.pageContents)
+            }
+
+            is HomeDetailUiState.Error -> {
+                Text("Error loading details: ${detailState.message}")
             }
         }
-
     }
-
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeTopAppBar(
     modifier: Modifier = Modifier,
+    onSearchRequested: (String) -> Unit = {},
     onSettingsSelected: () -> Unit = {}
 ) {
     TopAppBar(
         title = {
-            Text(
-                "PoMoDoGoGetter",
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary
+            HomeSearchInput(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 16.dp, start = 8.dp, end = 4.dp),
+                onSearchRequested = onSearchRequested
             )
         },
         modifier = modifier
+            .size(96.dp)
             .clip(MaterialTheme.shapes.small),
         colors = TopAppBarDefaults.mediumTopAppBarColors().copy(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
         ),
         navigationIcon = {
-            Image(
-                painter = painterResource(id = R.drawable.app_icon),
-                contentDescription = "Menu",
-                modifier = Modifier
-                    .size(32.dp)
-                    .padding(start = 4.dp)
-                    .clip(MaterialTheme.shapes.small)
-            )
+            Box(modifier = Modifier.fillMaxHeight()) {
+                Image(
+                    painter = painterResource(id = R.drawable.app_icon),
+                    contentDescription = "Menu",
+                    modifier = Modifier
+                        .size(52.dp)
+                        .padding(start = 4.dp)
+                        .align(Alignment.Center)
+                        .clip(MaterialTheme.shapes.small)
+                )
+            }
         },
         actions = {
-            IconButton(onClick = { onSettingsSelected() }) {
-                Icon(
-                    Icons.Outlined.Settings,
-                    modifier = Modifier.size(24.dp),
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        },
-    )
-}
-
-@Composable
-fun HomeFloatingActionButton(
-    modifier: Modifier = Modifier,
-    onNewTaskAdded: (String) -> Unit = {},
-    isEditingNewTaskInitial: Boolean = false,
-) {
-    val isEditingNewTask = remember { mutableStateOf(isEditingNewTaskInitial) }
-    if (isEditingNewTask.value) {
-        Row(
-            modifier = modifier
-                .padding(start = 30.dp, bottom = 16.dp)
-                .clip(MaterialTheme.shapes.large)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            val newTaskName = remember { mutableStateOf("") }
-            val focusRequester = remember { FocusRequester() }
-            val keyboardController = LocalSoftwareKeyboardController.current
-
-            LaunchedEffect(Unit) {
-                delay(50)
-                focusRequester.requestFocus()
-            }
-
-            OutlinedTextField(
-                value = newTaskName.value,
-                onValueChange = { newTaskName.value = it },
-                modifier = Modifier
-                    .padding(16.dp)
-                    .focusRequester(focusRequester),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    disabledBorderColor = MaterialTheme.colorScheme.tertiary,
-                    errorBorderColor = MaterialTheme.colorScheme.error,
-                ),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done,
-                    keyboardType = KeyboardType.Ascii
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        keyboardController?.hide()
-                        focusRequester.freeFocus()
-                        onNewTaskAdded(newTaskName.value)
-                        isEditingNewTask.value = false
-                    }
-                )
-            )
             IconButton(
-                onClick = {
-                    isEditingNewTask.value = false
-                    newTaskName.value = ""
-                },
-                modifier = Modifier.padding(end = 8.dp),
+                onClick = { onSettingsSelected() },
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .align(Alignment.CenterVertically)
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Cancel,
-                    contentDescription = "Cancel Adding New Task",
-                    modifier = Modifier.size(36.dp),
+                    Icons.Outlined.MoreVert,
+                    modifier = Modifier
+                        .size(36.dp),
+                    contentDescription = "Settings",
                     tint = MaterialTheme.colorScheme.primary,
                 )
             }
-        }
-    } else {
-        FloatingActionButton(
-            onClick = { isEditingNewTask.value = true },
-            modifier = modifier
-                .size(56.dp)
-                .clip(MaterialTheme.shapes.large),
-            contentColor = MaterialTheme.colorScheme.primary,
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Add,
-                contentDescription = "Add New Task",
-                modifier = Modifier.size(32.dp),
-            )
-        }
+        },
+    )
+}
+
+
+@Composable
+fun HomeSearchInput(modifier: Modifier = Modifier, onSearchRequested: (String) -> Unit = {}) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val keyboardController = LocalSoftwareKeyboardController.current
+        val focusRequester = FocusRequester()
+        val searchQuery = remember { mutableStateOf("") }
+
+        OutlinedTextField(
+            value = searchQuery.value,
+            onValueChange = { searchQuery.value = it },
+            label = { Text("Search", style = MaterialTheme.typography.labelLarge) },
+            textStyle = MaterialTheme.typography.labelLarge,
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Search,
+                keyboardType = KeyboardType.Ascii
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    keyboardController?.hide()
+                    focusRequester.freeFocus()
+                    onSearchRequested(searchQuery.value)
+                },
+            ),
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester)
+                .padding(end = 8.dp),
+        )
     }
 }
 
-@Composable
-fun HomePomodoroTimerCard(modifier: Modifier = Modifier, onStartPomodoroSelected: () -> Unit = {}) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors().copy(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.secondary,
-        ),
-        content = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = "Ready to get started?",
-                    modifier = Modifier
-                        .padding(top = 16.dp, bottom = 4.dp)
-                        .fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.secondary,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = {
-                        onStartPomodoroSelected()
-                    },
-                    modifier = Modifier.padding(bottom = 16.dp),
-                ) {
-                    Text(
-                        "Begin Pomodoro",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-
-                }
-            }
-        }
-    )
-}
 
 @Preview
 @Composable
 private fun HomeViewPreview() {
     AppTheme {
+        val testDetailUiState = MutableStateFlow(HomeDetailUiState.Initial)
         HomeView(
-            tasks = listOf(
-                TaskUiModel(
-                    id = 1,
-                    name = "Task 1",
-                    isCompleted = false
-                ),
-                TaskUiModel(
-                    id = 2,
-                    name = "Task 2",
-                    isCompleted = true
-                ),
-                TaskUiModel(
-                    id = 3,
-                    name = "Task 3",
-                    isCompleted = false
-                ),
-            )
+            searchResults = listOf(
+            ),
+            detailUiState = testDetailUiState,
         )
     }
 }
 
 @Preview
 @Composable
-private fun HomeViewContentsPreview() {
+private fun HomeListPaneContentsPreview() {
     AppTheme {
-        HomeViewContents(
-            tasks = listOf(
-                TaskUiModel(
-                    id = 1,
-                    name = "Task 1",
-                    isCompleted = false
+        HomeListPaneContents(
+            searchResults = listOf(
+                SearchResultItem(
+                    id = 1L,
+                    key = "test_key",
+                    title = "Title",
+                    description = "Description",
+                    thumbnailImageUrl = "https://example.com/image.jpg",
                 ),
-                TaskUiModel(
-                    id = 2,
-                    name = "Task 2",
-                    isCompleted = true
+                SearchResultItem(
+                    id = 2L,
+                    key = "test_key",
+                    title = "Title",
+                    description = "Description",
+                    thumbnailImageUrl = "https://example.com/image.jpg",
                 ),
-                TaskUiModel(
-                    id = 3,
-                    name = "Task 3",
-                    isCompleted = false
+                SearchResultItem(
+                    id = 3L,
+                    key = "test_key",
+                    title = "Title",
+                    description = "Description",
+                    thumbnailImageUrl = "https://example.com/image.jpg",
                 ),
-            )
+            ),
         )
     }
 }
 
 @Preview
 @Composable
-private fun HomeViewWelcomeCardPreview() {
+private fun HomeDetailPaneContentsPreview() {
     AppTheme {
-        HomeViewWelcomeCard()
-    }
-}
+        val testDetailUiState = MutableStateFlow(HomeDetailUiState.Initial)
 
-@Preview
-@Composable
-private fun HomeViewAddNewTaskCardPreview() {
-    AppTheme {
-        HomeViewAddNewTaskCard()
-    }
-}
-
-@Preview
-@Composable
-private fun HomeViewTaskListCardPreview() {
-    AppTheme {
-        HomeViewTaskListCard(
-            tasks = listOf(
-                TaskUiModel(
-                    id = 1,
-                    name = "Task 1",
-                    isCompleted = false
-                ),
-                TaskUiModel(
-                    id = 2,
-                    name = "Task 2",
-                    isCompleted = true
-                ),
-                TaskUiModel(
-                    id = 3,
-                    name = "Task 3",
-                    isCompleted = false
-                ),
-            )
+        HomeDetailPaneContents(
+            SearchResultItem(
+                id = 1L,
+                key = "test_key",
+                title = "Title",
+                description = "Description",
+                thumbnailImageUrl = "https://example.com/image.jpg",
+            ), testDetailUiState
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun HomeViewTaskListItemPreview() {
-    AppTheme {
-        Column {
-            HomeViewTaskListItem(
-                task = TaskUiModel(
-                    id = 1,
-                    name = "Task 1",
-                    isCompleted = false
-                )
-            )
-            HomeViewTaskListItem(
-                task = TaskUiModel(
-                    id = 2,
-                    name = "Task 2",
-                    isCompleted = true,
-                    dueDate = LocalDate.now().plusDays(1)
-                )
-            )
-        }
-    }
-}
-
-@Preview(showBackground = false)
-@Composable
-private fun HomeViewTaskListItemDarkPreview() {
-    AppTheme(darkTheme = true) {
-        Column {
-            HomeViewTaskListItem(
-                task = TaskUiModel(
-                    id = 1,
-                    name = "Task 1",
-                    isCompleted = false
-                )
-            )
-            HomeViewTaskListItem(
-                task = TaskUiModel(
-                    id = 2,
-                    name = "Task 2",
-                    isCompleted = true,
-                    dueDate = LocalDate.now().plusDays(1)
-                )
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun HomeAddNewTaskButtonPreview() {
-    AppTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(),
-        ) {
-            HomeAddNewTaskButton()
-        }
     }
 }
 
@@ -691,48 +390,10 @@ private fun HomeAddNewTaskButtonPreview() {
 @Composable
 private fun HomeTopAppBarPreview() {
     AppTheme {
-        HomeTopAppBar()
-    }
-}
-
-@Preview
-@Composable
-private fun HomeFloatingActionButtonPreview() {
-    AppTheme {
-        Column {
-            HomeFloatingActionButton(
-                modifier = Modifier,
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            HomeFloatingActionButton(
-                modifier = Modifier,
-                isEditingNewTaskInitial = true
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun HomeFloatingActionButtonDarkPreview() {
-    AppTheme(darkTheme = true) {
-        Column {
-            HomeFloatingActionButton(
-                modifier = Modifier
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            HomeFloatingActionButton(
-                modifier = Modifier,
-                isEditingNewTaskInitial = true
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun HomePomodoroTimerCardPreview() {
-    AppTheme {
-        HomePomodoroTimerCard()
+        HomeTopAppBar(
+            modifier = Modifier
+                .fillMaxWidth()
+                .size(72.dp)
+        )
     }
 }
