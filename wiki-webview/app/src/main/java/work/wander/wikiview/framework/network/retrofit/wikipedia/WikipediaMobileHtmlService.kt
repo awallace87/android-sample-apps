@@ -9,8 +9,8 @@ interface WikipediaMobileHtmlService {
     /**
      * Get the mobile HTML for a Wikipedia page
      */
-    @GET("page/mobile-html/{title}")
-    suspend fun getMobileHtml(
+    @GET("page/html/{title}")
+    suspend fun getHtmlPageForTitle(
         @Path("title") pageTitle: String
     ): Response<String>
 }

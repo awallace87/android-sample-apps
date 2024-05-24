@@ -45,4 +45,18 @@ class RetrofitWikipediaModule {
             .create(WikipediaMobileHtmlService::class.java)
     }
 
+    @Provides
+    @Singleton
+    fun provideRetrofitWikipediaPageSegmentsService(
+        okHttpClient: OkHttpClient
+    ): WikipediaPageSegmentsService {
+        val networkJson = Json { ignoreUnknownKeys = true }
+        return Retrofit.Builder()
+            .baseUrl("https://en.wikipedia.org/api/rest_v1/")
+            .addConverterFactory(networkJson.asConverterFactory("application/json".toMediaType()))
+            .client(okHttpClient)
+            .build()
+            .create(WikipediaPageSegmentsService::class.java)
+    }
+
 }

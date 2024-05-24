@@ -47,9 +47,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import work.wander.wikiview.R
+import work.wander.wikiview.ui.common.PicassoImage
 import work.wander.wikiview.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -158,11 +160,10 @@ fun HomeSearchResultItemView(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val headerImageSize = 48.dp
+        val headerImageSize = 36.dp
         if (searchResult.thumbnailImageUrl != null) {
-            Image(
-                painter = painterResource(id = R.drawable.app_icon),
-                contentDescription = "Thumbnail",
+            PicassoImage(
+                url = searchResult.thumbnailImageUrl,
                 modifier = Modifier.size(headerImageSize)
             )
         } else {
@@ -222,7 +223,18 @@ fun HomeDetailPaneContents(
             }
 
             is HomeDetailUiState.Success -> {
-                Text(detailState.pageContents)
+                AndroidView(factory = {
+                    WebView(it).apply {
+                        // Must use loadDataWithBaseURL to load the HTML content properly. loadData does not work.
+                        loadDataWithBaseURL(
+                            null,
+                            detailState.pageContents,
+                            "text/html",
+                            "UTF-8",
+                            null
+                        )
+                    }
+                }, modifier = Modifier.fillMaxSize())
             }
 
             is HomeDetailUiState.Error -> {

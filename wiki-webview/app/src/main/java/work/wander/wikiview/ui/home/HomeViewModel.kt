@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 import work.wander.wikiview.framework.annotation.BackgroundThread
 import work.wander.wikiview.framework.logging.AppLogger
 import work.wander.wikiview.framework.network.retrofit.wikipedia.WikipediaMobileHtmlService
+import work.wander.wikiview.framework.network.retrofit.wikipedia.WikipediaPageSegmentsService
 import work.wander.wikiview.framework.network.retrofit.wikipedia.WikipediaSearchService
 import javax.inject.Inject
 
@@ -54,6 +55,7 @@ sealed interface HomeDetailUiState {
 class HomeViewModel @Inject constructor(
     private val wikipediaSearchService: WikipediaSearchService,
     private val wikipediaMobileHtmlService: WikipediaMobileHtmlService,
+    private val wikipediaPageSegmentsService: WikipediaPageSegmentsService,
     @BackgroundThread private val backgroundDispatcher: CoroutineDispatcher,
     private val appLogger: AppLogger
 ) : ViewModel() {
@@ -114,7 +116,7 @@ class HomeViewModel @Inject constructor(
             currentDetailPane.update {
                 HomeDetailUiState.Loading(pageTitle)
             }
-            val response = wikipediaMobileHtmlService.getMobileHtml(pageTitle)
+            val response = wikipediaPageSegmentsService.getSegmentsForTitle(pageTitle)
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body == null) {
@@ -125,7 +127,7 @@ class HomeViewModel @Inject constructor(
                 } else {
                     appLogger.debug("Mobile HTML Successfully Retrieved for: $pageTitle")
                     currentDetailPane.update {
-                        HomeDetailUiState.Success(pageTitle, body)
+                        HomeDetailUiState.Success(pageTitle, body.segmentedContent)
                     }
                 }
             } else {
