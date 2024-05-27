@@ -23,7 +23,6 @@ hiltWork = "1.2.0"
 okHttpBom = "4.12.0"
 okHttpMockWebServer = "4.12.0"
 retrofit = "2.11.0"
-moshi = "1.15.1"
 picasso = "2.8"
 truthAssert = "1.4.2"
 coilImage = "2.6.0"
@@ -129,6 +128,7 @@ kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-s
 
 # Truth Assert
 truth-assert = { group = "com.google.truth", name = "truth", version.ref = "truthAssert" }
+
 compose-preview-renderer = { group = "com.android.tools.compose", name = "compose-preview-renderer", version.ref = "composePreviewRenderer" }
 
 [plugins]

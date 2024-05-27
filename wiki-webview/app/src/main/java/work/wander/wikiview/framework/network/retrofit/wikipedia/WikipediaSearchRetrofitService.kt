@@ -9,7 +9,7 @@ import retrofit2.http.Query
 /**
  * Retrofit service for Wikipedia Search
  */
-interface WikipediaSearchService {
+interface WikipediaSearchRetrofitService {
 
     /**
      * Search Wikipedia for a given query

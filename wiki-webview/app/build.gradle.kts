@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.daggerHiltAndroid)
     alias(libs.plugins.protoBufPlugin)
     alias(libs.plugins.kotlinSerialization)
+    id("kotlin-parcelize")
 }
 
 android {

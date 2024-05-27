@@ -1,5 +1,11 @@
 package work.wander.wikiview.ui.home
 
+import android.os.Parcelable
+import android.view.KeyEvent
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -8,44 +14,44 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
+import kotlinx.parcelize.Parcelize
+import work.wander.wikiview.domain.wiki.page.WikipediaPage
+import work.wander.wikiview.domain.wiki.search.WikipediaSearch
 import work.wander.wikiview.framework.annotation.BackgroundThread
 import work.wander.wikiview.framework.logging.AppLogger
-import work.wander.wikiview.framework.network.retrofit.wikipedia.WikipediaMobileHtmlService
-import work.wander.wikiview.framework.network.retrofit.wikipedia.WikipediaPageSegmentsService
-import work.wander.wikiview.framework.network.retrofit.wikipedia.WikipediaSearchService
 import javax.inject.Inject
 
 
-@Serializable
+@Parcelize
 data class SearchResultItem(
-    val id: Long,
+    val wikiPageId: Long,
     val key: String,
     val title: String,
     val description: String,
     val thumbnailImageUrl: String? = null
-)
+) : Parcelable
 
 sealed interface HomeSearchUiState {
     object Initial : HomeSearchUiState
     data class Loading(val query: String) : HomeSearchUiState
-    data class Success(val results: List<SearchResultItem>) : HomeSearchUiState
+    data class Success(
+        val searchQuery: String,
+        val results: List<SearchResultItem>
+    ) : HomeSearchUiState
+
     data class Error(val message: String) : HomeSearchUiState
 }
-
-@Serializable
-data class ItemDetailContents(
-    val pageId: Long,
-    val key: String,
-    val mobileHtml: String,
-)
 
 sealed interface HomeDetailUiState {
     object Initial : HomeDetailUiState
     data class Loading(val pageTitle: String) : HomeDetailUiState
     data class Success(
         val pageTitle: String,
-        val pageContents: String
+        val pageDescription: String,
+        val thumbnailImageUrl: String?,
+        val mobileHtmlContent: String,
+        val defaultHtmlContent: String,
+        val webViewClient: WebViewClient? = null
     ) : HomeDetailUiState
 
     data class Error(val message: String) : HomeDetailUiState
@@ -53,9 +59,8 @@ sealed interface HomeDetailUiState {
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val wikipediaSearchService: WikipediaSearchService,
-    private val wikipediaMobileHtmlService: WikipediaMobileHtmlService,
-    private val wikipediaPageSegmentsService: WikipediaPageSegmentsService,
+    private val wikipediaSearch: WikipediaSearch,
+    private val wikipediaPage: WikipediaPage,
     @BackgroundThread private val backgroundDispatcher: CoroutineDispatcher,
     private val appLogger: AppLogger
 ) : ViewModel() {
@@ -71,41 +76,32 @@ class HomeViewModel @Inject constructor(
     fun detailUiState(): StateFlow<HomeDetailUiState> = currentDetailPane
 
     fun search(query: String) {
+        currentSearchResults.update {
+            HomeSearchUiState.Loading(query)
+        }
         viewModelScope.launch(backgroundDispatcher) {
-            currentSearchResults.update {
-                HomeSearchUiState.Loading(query)
-            }
-            val response = wikipediaSearchService.search(query)
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body == null) {
-                    appLogger.error("Empty response body")
+            when (val response = wikipediaSearch.searchForPages(query)) {
+                is WikipediaSearch.SearchResponse.Success -> {
                     currentSearchResults.update {
-                        HomeSearchUiState.Error("Empty Response")
-                    }
-                } else if (body.pages.isEmpty()) {
-                    appLogger.debug("No search results found")
-                    currentSearchResults.update {
-                        HomeSearchUiState.Success(emptyList())
-                    }
-                } else {
-                    appLogger.debug("Search results: ${body.pages}")
-                    currentSearchResults.update {
-                        HomeSearchUiState.Success(body.pages.map { searchResult ->
-                            SearchResultItem(
-                                id = searchResult.id,
-                                key = searchResult.key,
-                                title = searchResult.title,
-                                description = searchResult.description ?: "",
-                                thumbnailImageUrl = searchResult.thumbnail?.url,
-                            )
-                        })
+                        HomeSearchUiState.Success(
+                            searchQuery = query,
+                            results = response.pages.map { searchResult ->
+                                SearchResultItem(
+                                    wikiPageId = searchResult.wikiPageId,
+                                    key = searchResult.key,
+                                    title = searchResult.title,
+                                    description = searchResult.description,
+                                    thumbnailImageUrl = searchResult.url
+                                )
+                            })
                     }
                 }
-            } else {
-                appLogger.error("Failed to search Wikipedia: ${response.errorBody()}")
-                currentSearchResults.update {
-                    HomeSearchUiState.Error("Unable to retrieve results from Wikipedia API")
+
+                is WikipediaSearch.SearchResponse.Error -> {
+                    appLogger.error("Failed to search Wikipedia for query: $query")
+                    currentSearchResults.update {
+                        HomeSearchUiState.Error(response.message)
+                    }
                 }
             }
         }
@@ -116,27 +112,64 @@ class HomeViewModel @Inject constructor(
             currentDetailPane.update {
                 HomeDetailUiState.Loading(pageTitle)
             }
-            val response = wikipediaPageSegmentsService.getSegmentsForTitle(pageTitle)
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body == null) {
-                    appLogger.error("Empty response body")
-                    currentDetailPane.update {
-                        HomeDetailUiState.Error("Empty Response")
-                    }
-                } else {
-                    appLogger.debug("Mobile HTML Successfully Retrieved for: $pageTitle")
-                    currentDetailPane.update {
-                        HomeDetailUiState.Success(pageTitle, body.segmentedContent)
-                    }
+            val defaultHtml = wikipediaPage.getDefaultHtmlForPage(pageTitle)
+            val mobileHtml = wikipediaPage.getMobileHtmlForPage(pageTitle)
+            if (defaultHtml != null && mobileHtml != null) {
+                currentDetailPane.update {
+                    HomeDetailUiState.Success(
+                        pageTitle = pageTitle,
+                        pageDescription = defaultHtml.html,
+                        thumbnailImageUrl = mobileHtml.html,
+                        mobileHtmlContent = mobileHtml.getBase64EncodedHtml(),
+                        defaultHtmlContent = defaultHtml.getBase64EncodedHtml(),
+                        webViewClient = webViewClient
+                    )
                 }
             } else {
-                appLogger.error("Failed to retrieve mobile HTML: ${response.errorBody()}")
+                appLogger.error("Failed to fetch HTML for page $pageTitle")
                 currentDetailPane.update {
-                    HomeDetailUiState.Error("Unable to retrieve mobile HTML from Wikipedia API")
+                    HomeDetailUiState.Error("Failed to fetch HTML for page $pageTitle")
                 }
             }
         }
+    }
+
+    private val webViewClient = object : WebViewClient() {
+
+        override fun onPageFinished(view: WebView?, url: String?) {
+            appLogger.info("Finished loading page: $url")
+            super.onPageFinished(view, url)
+        }
+
+        override fun onLoadResource(view: WebView?, url: String?) {
+            appLogger.info("Loading resource: $url")
+            super.onLoadResource(view, url)
+        }
+
+        override fun onReceivedError(
+            view: WebView?,
+            request: WebResourceRequest?,
+            error: WebResourceError?
+        ) {
+            appLogger.error("Received error: ${error?.description}")
+            super.onReceivedError(view, request, error)
+        }
+
+        override fun shouldOverrideKeyEvent(view: WebView?, event: KeyEvent?): Boolean {
+            appLogger.info("Should Override Key Event: ${event?.keyCode}")
+            return super.shouldOverrideKeyEvent(view, event)
+        }
+
+        override fun onUnhandledKeyEvent(view: WebView?, event: KeyEvent?) {
+            appLogger.info("On Unhandled Key Event: ${event?.keyCode}")
+            super.onUnhandledKeyEvent(view, event)
+        }
+
+        override fun onScaleChanged(view: WebView?, oldScale: Float, newScale: Float) {
+            appLogger.info("Scale changed from $oldScale to $newScale")
+            super.onScaleChanged(view, oldScale, newScale)
+        }
+
     }
 
 }

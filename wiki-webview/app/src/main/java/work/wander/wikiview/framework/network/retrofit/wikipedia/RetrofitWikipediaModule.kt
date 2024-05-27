@@ -20,7 +20,7 @@ class RetrofitWikipediaModule {
     @Singleton
     fun provideRetrofitWikipediaSearchService(
         okHttpClient: OkHttpClient
-    ): WikipediaSearchService {
+    ): WikipediaSearchRetrofitService {
 
         val networkJson = Json { ignoreUnknownKeys = true }
 
@@ -29,7 +29,7 @@ class RetrofitWikipediaModule {
             .addConverterFactory(networkJson.asConverterFactory("application/json".toMediaType()))
             .client(okHttpClient)
             .build()
-            .create(WikipediaSearchService::class.java)
+            .create(WikipediaSearchRetrofitService::class.java)
     }
 
     @Provides
@@ -43,6 +43,19 @@ class RetrofitWikipediaModule {
             .client(okHttpClient)
             .build()
             .create(WikipediaMobileHtmlService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRetrofitWikipediaDefaultHtmlService(
+        okHttpClient: OkHttpClient
+    ): WikipediaDefaultHtmlService {
+        return Retrofit.Builder()
+            .baseUrl("https://en.wikipedia.org/api/rest_v1/")
+            .addConverterFactory(ScalarsConverterFactory.create())
+            .client(okHttpClient)
+            .build()
+            .create(WikipediaDefaultHtmlService::class.java)
     }
 
     @Provides

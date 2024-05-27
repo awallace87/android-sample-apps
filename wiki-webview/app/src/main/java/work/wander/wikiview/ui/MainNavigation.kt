@@ -9,7 +9,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
-import work.wander.wikiview.ui.home.HomeSearchUiState
 import work.wander.wikiview.ui.home.HomeView
 import work.wander.wikiview.ui.home.HomeViewModel
 import work.wander.wikiview.ui.settings.ApplicationSettingsView
@@ -28,14 +27,8 @@ fun MainNavigation() {
         composable<Home> {
             val homeViewModel: HomeViewModel = hiltViewModel<HomeViewModel>()
 
-            val searchState = homeViewModel.searchUiState().collectAsState().value
-            val results = when (searchState) {
-                is HomeSearchUiState.Success -> searchState.results
-                else -> emptyList()
-            }
-
             HomeView(
-                searchResults = results,
+                searchListUiState = homeViewModel.searchUiState(),
                 modifier = Modifier.fillMaxSize(),
                 onSearchRequested = { query ->
                     homeViewModel.search(query)

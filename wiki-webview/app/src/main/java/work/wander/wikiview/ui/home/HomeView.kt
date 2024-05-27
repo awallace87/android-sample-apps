@@ -3,15 +3,17 @@ package work.wander.wikiview.ui.home
 import android.webkit.WebView
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement.Top
+import androidx.compose.foundation.layout.Arrangement.Center
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.ImageNotSupported
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +38,7 @@ import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,19 +48,22 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import work.wander.wikiview.R
+import work.wander.wikiview.ui.common.LoadingIndicatorView
 import work.wander.wikiview.ui.common.PicassoImage
 import work.wander.wikiview.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun HomeView(
-    searchResults: List<SearchResultItem>,
+    searchListUiState: StateFlow<HomeSearchUiState>,
     detailUiState: StateFlow<HomeDetailUiState>,
     modifier: Modifier = Modifier,
     onSearchRequested: (String) -> Unit = {},
@@ -76,17 +82,17 @@ fun HomeView(
         value = navigator.scaffoldValue,
         listPane = {
             AnimatedPane {
+                val searchState = searchListUiState.collectAsState().value
                 HomeListPaneContents(
-                    searchResults = searchResults,
+                    searchUiState = searchState,
                     onResultSelected = {
-                        onSearchResultSelected(it)
                         navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
+                        onSearchResultSelected(it)
                     },
                     onSearchRequested = onSearchRequested,
                     onSettingsSelected = onSettingsSelected
                 )
             }
-
         },
         detailPane = {
             AnimatedPane {
@@ -103,7 +109,7 @@ fun HomeView(
 
 @Composable
 fun HomeListPaneContents(
-    searchResults: List<SearchResultItem>,
+    searchUiState: HomeSearchUiState,
     modifier: Modifier = Modifier,
     onResultSelected: (SearchResultItem) -> Unit = {},
     onSearchRequested: (String) -> Unit = {},
@@ -111,42 +117,93 @@ fun HomeListPaneContents(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Top,
+        verticalArrangement = Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        val searchFieldLabel = when (searchUiState) {
+            is HomeSearchUiState.Success -> searchUiState.searchQuery
+            else -> "Search"
+        }
         HomeTopAppBar(
+            searchFieldLabel = searchFieldLabel,
             modifier = Modifier
                 .fillMaxWidth(),
             onSearchRequested = onSearchRequested,
             onSettingsSelected = onSettingsSelected
         )
-        if (searchResults.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    "No search results",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .align(Alignment.Center)
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(searchResults.size) { searchResultIndex ->
-                    val searchResult = searchResults[searchResultIndex]
-                    HomeSearchResultItemView(
-                        searchResult = searchResult,
-                        modifier = Modifier.fillMaxWidth(),
-                        onSelected = {
-                            onResultSelected(searchResult)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentAlignment = Alignment.Center,
+        ) {
+            when (searchUiState) {
+                is HomeSearchUiState.Success -> {
+                    val searchResults = searchUiState.results
+                    if (searchResults.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Text(
+                                "No search results",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .align(Alignment.Center)
+                            )
                         }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(searchResults.size) { searchResultIndex ->
+                                val searchResult = searchResults[searchResultIndex]
+                                HomeSearchResultItemView(
+                                    searchResult = searchResult,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onSelected = {
+                                        onResultSelected(searchResult)
+                                    }
+                                )
+                                if (searchResultIndex < searchResults.size - 1) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                is HomeSearchUiState.Error -> {
+                    Text(
+                        "Error loading search results: ${searchUiState.message}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+
+                HomeSearchUiState.Initial -> {
+                    Text(
+                        "Search for articles on Wikipedia",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+                is HomeSearchUiState.Loading -> {
+                    LoadingIndicatorView(
+                        modifier = Modifier.size(48.dp)
                     )
                 }
             }
         }
+
+
     }
 }
 
@@ -160,6 +217,7 @@ fun HomeSearchResultItemView(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Spacer(modifier = Modifier.width(8.dp))
         val headerImageSize = 36.dp
         if (searchResult.thumbnailImageUrl != null) {
             PicassoImage(
@@ -175,16 +233,19 @@ fun HomeSearchResultItemView(
             )
 
         }
+        Spacer(modifier = Modifier.width(8.dp))
         Text(
             searchResult.title,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.weight(0.5f)
+            modifier = Modifier.weight(0.4f)
         )
         Text(
             searchResult.description,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(0.5f)
         )
         IconButton(onClick = {
@@ -197,6 +258,7 @@ fun HomeSearchResultItemView(
                 tint = MaterialTheme.colorScheme.primary
             )
         }
+        Spacer(modifier = Modifier.width(8.dp))
     }
 }
 
@@ -209,38 +271,91 @@ fun HomeDetailPaneContents(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Top,
+        verticalArrangement = Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val detailState = detailUiState.collectAsState().value
-        when (detailState) {
+        when (val detailState = detailUiState.collectAsState().value) {
             is HomeDetailUiState.Initial -> {
-                Text("Select a search result to view details")
+                Text(
+                    "Select a search result to view details",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
             }
 
             is HomeDetailUiState.Loading -> {
-                Text("Loading details for ${selectedSearchResult.title}")
+                Text(
+                    "Loading details for ${selectedSearchResult.title}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
             }
 
             is HomeDetailUiState.Success -> {
-                AndroidView(factory = {
-                    WebView(it).apply {
-                        // Must use loadDataWithBaseURL to load the HTML content properly. loadData does not work.
-                        loadDataWithBaseURL(
-                            null,
-                            detailState.pageContents,
-                            "text/html",
-                            "UTF-8",
-                            null
-                        )
-                    }
-                }, modifier = Modifier.fillMaxSize())
+                WikiPageDetailsView(detailState, modifier = Modifier.fillMaxSize())
             }
 
             is HomeDetailUiState.Error -> {
-                Text("Error loading details: ${detailState.message}")
+                Text(
+                    "Error loading details: ${detailState.message}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
             }
         }
+    }
+}
+
+@Composable
+fun WikiPageDetailsView(successState: HomeDetailUiState.Success, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+    ) {
+        Text(
+            "Article: ${successState.pageTitle}",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
+        )
+        val html = successState.mobileHtmlContent
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(8.dp)
+        ) {
+            AndroidView(
+                factory = { context ->
+                    WebView(context).apply {
+                        if (successState.webViewClient != null) {
+                            webViewClient = successState.webViewClient
+                        }
+                        // Loading Base64 encoded HTML content
+                        // See(https://developer.android.com/develop/ui/views/layout/webapps/load-local-content)
+                        loadData(html, "text/html", "base64")
+                    }
+                },
+                update = { webView ->
+                    webView.loadData(html, "text/html", "base64")
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+        }
+
     }
 }
 
@@ -248,6 +363,7 @@ fun HomeDetailPaneContents(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeTopAppBar(
+    searchFieldLabel: String,
     modifier: Modifier = Modifier,
     onSearchRequested: (String) -> Unit = {},
     onSettingsSelected: () -> Unit = {}
@@ -255,6 +371,7 @@ fun HomeTopAppBar(
     TopAppBar(
         title = {
             HomeSearchInput(
+                searchFieldLabel,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp, bottom = 16.dp, start = 8.dp, end = 4.dp),
@@ -301,14 +418,16 @@ fun HomeTopAppBar(
 
 
 @Composable
-fun HomeSearchInput(modifier: Modifier = Modifier, onSearchRequested: (String) -> Unit = {}) {
+fun HomeSearchInput(
+    searchFieldLabel: String,
+    modifier: Modifier = Modifier, onSearchRequested: (String) -> Unit = {}) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
         val keyboardController = LocalSoftwareKeyboardController.current
         val focusRequester = FocusRequester()
-        val searchQuery = remember { mutableStateOf("") }
+        val searchQuery = rememberSaveable { mutableStateOf(searchFieldLabel) }
 
         OutlinedTextField(
             value = searchQuery.value,
@@ -341,9 +460,8 @@ private fun HomeViewPreview() {
     AppTheme {
         val testDetailUiState = MutableStateFlow(HomeDetailUiState.Initial)
         HomeView(
-            searchResults = listOf(
-            ),
-            detailUiState = testDetailUiState,
+            searchListUiState = MutableStateFlow(HomeSearchUiState.Initial),
+            detailUiState = testDetailUiState
         )
     }
 }
@@ -352,30 +470,10 @@ private fun HomeViewPreview() {
 @Composable
 private fun HomeListPaneContentsPreview() {
     AppTheme {
+        val uiState = MutableStateFlow(HomeSearchUiState.Initial)
         HomeListPaneContents(
-            searchResults = listOf(
-                SearchResultItem(
-                    id = 1L,
-                    key = "test_key",
-                    title = "Title",
-                    description = "Description",
-                    thumbnailImageUrl = "https://example.com/image.jpg",
-                ),
-                SearchResultItem(
-                    id = 2L,
-                    key = "test_key",
-                    title = "Title",
-                    description = "Description",
-                    thumbnailImageUrl = "https://example.com/image.jpg",
-                ),
-                SearchResultItem(
-                    id = 3L,
-                    key = "test_key",
-                    title = "Title",
-                    description = "Description",
-                    thumbnailImageUrl = "https://example.com/image.jpg",
-                ),
-            ),
+            searchUiState = HomeSearchUiState.Initial,
+            onResultSelected = {},
         )
     }
 }
@@ -384,17 +482,48 @@ private fun HomeListPaneContentsPreview() {
 @Composable
 private fun HomeDetailPaneContentsPreview() {
     AppTheme {
-        val testDetailUiState = MutableStateFlow(HomeDetailUiState.Initial)
-
-        HomeDetailPaneContents(
-            SearchResultItem(
-                id = 1L,
-                key = "test_key",
-                title = "Title",
-                description = "Description",
-                thumbnailImageUrl = "https://example.com/image.jpg",
-            ), testDetailUiState
+        val searchResultItem = SearchResultItem(
+            wikiPageId = 1L,
+            key = "test_key",
+            title = "Title",
+            description = "Description",
+            thumbnailImageUrl = "https://example.com/image.jpg",
         )
+
+        val initialState = MutableStateFlow(HomeDetailUiState.Initial)
+
+        val loadingState = MutableStateFlow(HomeDetailUiState.Loading("Title"))
+        val successState = MutableStateFlow(
+            HomeDetailUiState.Success(
+                pageTitle = "Title",
+                pageDescription = "Description",
+                thumbnailImageUrl = "https://example.com/image.jpg",
+                mobileHtmlContent = "",
+                defaultHtmlContent = "",
+            )
+        )
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            HomeDetailPaneContents(
+                selectedSearchResult = searchResultItem,
+                detailUiState = initialState
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(8.dp)
+            )
+            HomeDetailPaneContents(
+                searchResultItem, loadingState
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(8.dp)
+            )
+            HomeDetailPaneContents(
+                searchResultItem, successState
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(8.dp)
+            )
+        }
     }
 }
 
@@ -403,6 +532,7 @@ private fun HomeDetailPaneContentsPreview() {
 private fun HomeTopAppBarPreview() {
     AppTheme {
         HomeTopAppBar(
+            searchFieldLabel = "Search",
             modifier = Modifier
                 .fillMaxWidth()
                 .size(72.dp)
