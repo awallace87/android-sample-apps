@@ -2,8 +2,17 @@ package work.wander.wikiview.domain.wiki.page
 
 import android.util.Base64
 
+/**
+ * Interface for accessing Wikipedia page data (in HTML format).
+ */
 interface WikipediaPage {
 
+    /**
+     * Represents the mobile HTML of a Wikipedia page.
+     *
+     * @property pageTitle the title of the Wikipedia page
+     * @property html the mobile HTML of the Wikipedia page
+     */
     data class MobileHtmlPage(
         val pageTitle: String,
         val html: String
@@ -18,6 +27,12 @@ interface WikipediaPage {
 
     suspend fun getMobileHtmlForPage(pageTitle: String): MobileHtmlPage?
 
+    /**
+     * Represents the default HTML of a Wikipedia page.
+     *
+     * @property pageTitle the title of the Wikipedia page
+     * @property html the default HTML of the Wikipedia page
+     */
     data class DefaultHtmlPage(
         val pageTitle: String,
         val html: String

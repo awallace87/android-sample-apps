@@ -5,7 +5,14 @@ import androidx.room.PrimaryKey
 import java.time.Instant
 
 /**
- * Data class representing the metadata and contents of a given Wikipedia page.
+ * Represents the metadata of a Wikipedia page.
+ *
+ * @property wikiPageId the ID of the Wikipedia page
+ * @property key the key of the metadata
+ * @property title the title of the metadata
+ * @property excerpt the excerpt of the metadata
+ * @property description the description of the metadata
+ * @property lastUpdated the time when the metadata was last updated
  */
 @Entity(tableName = "wiki_page_metadata")
 data class WikiPageMetadata(

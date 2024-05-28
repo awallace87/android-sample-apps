@@ -10,6 +10,9 @@ import java.time.Duration
 import java.time.Instant
 import javax.inject.Inject
 
+/**
+ * The default implementation of [WikipediaPage].
+ */
 class DefaultWikipediaPage @Inject constructor(
     private val wikipediaMobileHtmlService: WikipediaMobileHtmlService,
     private val wikipediaDefaultHtmlService: WikipediaDefaultHtmlService,

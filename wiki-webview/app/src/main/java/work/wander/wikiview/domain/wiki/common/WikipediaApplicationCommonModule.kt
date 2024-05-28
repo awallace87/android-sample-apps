@@ -28,5 +28,4 @@ class WikipediaApplicationCommonModule {
         return CoroutineScope(SupervisorJob() + backgroundDispatcher)
     }
 
-
 }

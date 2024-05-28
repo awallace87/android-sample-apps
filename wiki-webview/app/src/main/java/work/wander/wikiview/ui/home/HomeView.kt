@@ -20,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.ImageNotSupported
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -69,6 +68,7 @@ fun HomeView(
     modifier: Modifier = Modifier,
     onSearchRequested: (String) -> Unit = {},
     onSearchResultSelected: (SearchResultItem) -> Unit = {},
+    onInternalLinkSelected: (String) -> Unit = {},
     onSettingsSelected: () -> Unit = {},
 ) {
     val navigator = rememberListDetailPaneScaffoldNavigator<SearchResultItem>()
@@ -100,7 +100,8 @@ fun HomeView(
                 navigator.currentDestination?.content?.let { searchResult ->
                     HomeDetailPaneContents(
                         detailUiState = detailUiState,
-                        selectedSearchResult = searchResult
+                        selectedSearchResult = searchResult,
+                        onInternalLinkClicked = onInternalLinkSelected,
                     )
                 } ?: Text(text = "Detail destination not selected")
             }
@@ -269,7 +270,8 @@ fun HomeSearchResultItemView(
 fun HomeDetailPaneContents(
     selectedSearchResult: SearchResultItem,
     detailUiState: StateFlow<HomeDetailUiState>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onInternalLinkClicked: (String) -> Unit = {},
 ) {
     Column(
         modifier = modifier,
@@ -290,7 +292,7 @@ fun HomeDetailPaneContents(
 
             is HomeDetailUiState.Loading -> {
                 Text(
-                    "Loading details for ${selectedSearchResult.title}",
+                    "Loading details for ${detailState.pageTitle}",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -300,7 +302,11 @@ fun HomeDetailPaneContents(
             }
 
             is HomeDetailUiState.Success -> {
-                WikiPageDetailsView(detailState, modifier = Modifier.fillMaxSize())
+                WikiPageDetailsView(
+                    detailState,
+                    modifier = Modifier.fillMaxSize(),
+                    onInternalLinkClicked = onInternalLinkClicked
+                )
             }
 
             is HomeDetailUiState.Error -> {
@@ -318,7 +324,11 @@ fun HomeDetailPaneContents(
 }
 
 @Composable
-fun WikiPageDetailsView(successState: HomeDetailUiState.Success, modifier: Modifier = Modifier) {
+fun WikiPageDetailsView(
+    successState: HomeDetailUiState.Success,
+    modifier: Modifier = Modifier,
+    onInternalLinkClicked: (String) -> Unit = {}
+) {
     Column(
         modifier = modifier
     ) {
@@ -345,15 +355,22 @@ fun WikiPageDetailsView(successState: HomeDetailUiState.Success, modifier: Modif
                         if (successState.webViewClient != null) {
                             webViewClient = successState.webViewClient
                         }
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        // TODO: Should allow for "Desktop" viewing mode
+                        settings.useWideViewPort = false
+
+                        addJavascriptInterface(object {
+                            @android.webkit.JavascriptInterface
+                            fun onLinkClick(url: String) {
+                                onInternalLinkClicked(url)
+                            }
+                        }, "Android")
+
                         // Loading Base64 encoded HTML content
                         // See(https://developer.android.com/develop/ui/views/layout/webapps/load-local-content)
                         loadData(html, "text/html", "base64")
                     }
-                },
-                update = { webView ->
-                    // Loading Base64 encoded HTML content
-                    // See(https://developer.android.com/develop/ui/views/layout/webapps/load-local-content)
-                    webView.loadData(html, "text/html", "base64")
                 },
                 modifier = Modifier
                     .fillMaxWidth()

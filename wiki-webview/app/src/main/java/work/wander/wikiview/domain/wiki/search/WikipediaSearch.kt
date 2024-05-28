@@ -1,5 +1,8 @@
 package work.wander.wikiview.domain.wiki.search
 
+/**
+ * Interface for searching Wikipedia pages.
+ */
 interface WikipediaSearch {
 
     /**
@@ -18,6 +21,9 @@ interface WikipediaSearch {
         val url: String?,
     )
 
+    /**
+     * Represents the response from a Wikipedia search request.
+     */
     sealed interface SearchResponse {
         data class Success(val pages: List<WikiPageSearchResult>) : SearchResponse
         data class Error(val message: String) : SearchResponse

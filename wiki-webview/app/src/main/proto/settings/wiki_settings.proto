@@ -7,7 +7,6 @@ message WikipediaViewSettings {
 
   PageHtmlType selectedHtmlType = 1;
 
-
   enum PageHtmlType {
     DEFAULT = 0;
     MOBILE = 1;
