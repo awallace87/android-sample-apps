@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option java_package = "work.wander.wikiview.proto.settings";
+option java_multiple_files = true;
+
+message WikipediaViewSettings {
+
+  PageHtmlType selectedHtmlType = 1;
+
+  enum PageHtmlType {
+    DEFAULT = 0;
+    MOBILE = 1;
+  }
+
+}
