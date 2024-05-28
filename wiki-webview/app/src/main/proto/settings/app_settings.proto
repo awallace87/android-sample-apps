@@ -1,8 +1,13 @@
 syntax = "proto3";
+import "settings/wiki_settings.proto";
 
 option java_package = "work.wander.wikiview.proto.settings";
 option java_multiple_files = true;
 
 message ApplicationSettings {
   bool isDeveloperModeEnabled = 1;
+
+  WikipediaViewSettings wikipediaViewSettings = 2;
+
+
 }

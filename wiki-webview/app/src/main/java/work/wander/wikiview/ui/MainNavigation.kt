@@ -36,6 +36,9 @@ fun MainNavigation() {
                 onSearchResultSelected = {
                     homeViewModel.setDetailPanePageTitle(it.key)
                 },
+                onSettingsSelected = {
+                    navController.navigate(Settings)
+                },
                 detailUiState = homeViewModel.detailUiState()
             )
         }

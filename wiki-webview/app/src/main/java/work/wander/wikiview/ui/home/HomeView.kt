@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.ImageNotSupported
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -86,8 +87,8 @@ fun HomeView(
                 HomeListPaneContents(
                     searchUiState = searchState,
                     onResultSelected = {
-                        navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
                         onSearchResultSelected(it)
+                        navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
                     },
                     onSearchRequested = onSearchRequested,
                     onSettingsSelected = onSettingsSelected
@@ -122,7 +123,7 @@ fun HomeListPaneContents(
     ) {
         val searchFieldLabel = when (searchUiState) {
             is HomeSearchUiState.Success -> searchUiState.searchQuery
-            else -> "Search"
+            else -> ""
         }
         HomeTopAppBar(
             searchFieldLabel = searchFieldLabel,
@@ -195,6 +196,7 @@ fun HomeListPaneContents(
                             .padding(16.dp)
                     )
                 }
+
                 is HomeSearchUiState.Loading -> {
                     LoadingIndicatorView(
                         modifier = Modifier.size(48.dp)
@@ -329,7 +331,7 @@ fun WikiPageDetailsView(successState: HomeDetailUiState.Success, modifier: Modif
                 .padding(8.dp)
                 .fillMaxWidth()
         )
-        val html = successState.mobileHtmlContent
+        val html = successState.htmlContent
 
         Box(
             modifier = Modifier
@@ -349,6 +351,8 @@ fun WikiPageDetailsView(successState: HomeDetailUiState.Success, modifier: Modif
                     }
                 },
                 update = { webView ->
+                    // Loading Base64 encoded HTML content
+                    // See(https://developer.android.com/develop/ui/views/layout/webapps/load-local-content)
                     webView.loadData(html, "text/html", "base64")
                 },
                 modifier = Modifier
@@ -405,9 +409,9 @@ fun HomeTopAppBar(
                     .align(Alignment.CenterVertically)
             ) {
                 Icon(
-                    Icons.Outlined.MoreVert,
+                    Icons.Outlined.Settings,
                     modifier = Modifier
-                        .size(36.dp),
+                        .size(32.dp),
                     contentDescription = "Settings",
                     tint = MaterialTheme.colorScheme.primary,
                 )
@@ -420,7 +424,8 @@ fun HomeTopAppBar(
 @Composable
 fun HomeSearchInput(
     searchFieldLabel: String,
-    modifier: Modifier = Modifier, onSearchRequested: (String) -> Unit = {}) {
+    modifier: Modifier = Modifier, onSearchRequested: (String) -> Unit = {}
+) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
@@ -496,10 +501,7 @@ private fun HomeDetailPaneContentsPreview() {
         val successState = MutableStateFlow(
             HomeDetailUiState.Success(
                 pageTitle = "Title",
-                pageDescription = "Description",
-                thumbnailImageUrl = "https://example.com/image.jpg",
-                mobileHtmlContent = "",
-                defaultHtmlContent = "",
+                htmlContent = "<html><body><h1>Test</h1></body></html>",
             )
         )
 

@@ -11,14 +11,20 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
+import work.wander.wikiview.data.settings.ApplicationSettingsRepository
 import work.wander.wikiview.domain.wiki.page.WikipediaPage
 import work.wander.wikiview.domain.wiki.search.WikipediaSearch
 import work.wander.wikiview.framework.annotation.BackgroundThread
 import work.wander.wikiview.framework.logging.AppLogger
+import work.wander.wikiview.proto.settings.WikipediaViewSettings
 import javax.inject.Inject
 
 
@@ -32,7 +38,7 @@ data class SearchResultItem(
 ) : Parcelable
 
 sealed interface HomeSearchUiState {
-    object Initial : HomeSearchUiState
+    data object Initial : HomeSearchUiState
     data class Loading(val query: String) : HomeSearchUiState
     data class Success(
         val searchQuery: String,
@@ -43,14 +49,11 @@ sealed interface HomeSearchUiState {
 }
 
 sealed interface HomeDetailUiState {
-    object Initial : HomeDetailUiState
+    data object Initial : HomeDetailUiState
     data class Loading(val pageTitle: String) : HomeDetailUiState
     data class Success(
         val pageTitle: String,
-        val pageDescription: String,
-        val thumbnailImageUrl: String?,
-        val mobileHtmlContent: String,
-        val defaultHtmlContent: String,
+        val htmlContent: String,
         val webViewClient: WebViewClient? = null
     ) : HomeDetailUiState
 
@@ -61,6 +64,7 @@ sealed interface HomeDetailUiState {
 class HomeViewModel @Inject constructor(
     private val wikipediaSearch: WikipediaSearch,
     private val wikipediaPage: WikipediaPage,
+    private val applicationSettingsRepository: ApplicationSettingsRepository,
     @BackgroundThread private val backgroundDispatcher: CoroutineDispatcher,
     private val appLogger: AppLogger
 ) : ViewModel() {
@@ -68,10 +72,19 @@ class HomeViewModel @Inject constructor(
     private val currentSearchResults =
         MutableStateFlow<HomeSearchUiState>(HomeSearchUiState.Initial)
 
-    fun searchUiState(): StateFlow<HomeSearchUiState> = currentSearchResults
-
     private val currentDetailPane =
         MutableStateFlow<HomeDetailUiState>(HomeDetailUiState.Initial)
+
+    private val wikipediaViewSettings =
+        applicationSettingsRepository.getApplicationSettings().map { settings ->
+            settings.wikipediaViewSettings
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            WikipediaViewSettings.getDefaultInstance()
+        )
+
+    fun searchUiState(): StateFlow<HomeSearchUiState> = currentSearchResults
 
     fun detailUiState(): StateFlow<HomeDetailUiState> = currentDetailPane
 
@@ -112,24 +125,29 @@ class HomeViewModel @Inject constructor(
             currentDetailPane.update {
                 HomeDetailUiState.Loading(pageTitle)
             }
-            val defaultHtml = wikipediaPage.getDefaultHtmlForPage(pageTitle)
-            val mobileHtml = wikipediaPage.getMobileHtmlForPage(pageTitle)
-            if (defaultHtml != null && mobileHtml != null) {
-                currentDetailPane.update {
-                    HomeDetailUiState.Success(
-                        pageTitle = pageTitle,
-                        pageDescription = defaultHtml.html,
-                        thumbnailImageUrl = mobileHtml.html,
-                        mobileHtmlContent = mobileHtml.getBase64EncodedHtml(),
-                        defaultHtmlContent = defaultHtml.getBase64EncodedHtml(),
-                        webViewClient = webViewClient
-                    )
+
+            val selectedHtmlContentType = wikipediaViewSettings.value.selectedHtmlType
+            val html = when (selectedHtmlContentType) {
+                WikipediaViewSettings.PageHtmlType.MOBILE -> wikipediaPage.getMobileHtmlForPage(
+                    pageTitle
+                )?.getBase64EncodedHtml()
+
+                WikipediaViewSettings.PageHtmlType.DEFAULT -> wikipediaPage.getDefaultHtmlForPage(
+                    pageTitle
+                )?.getBase64EncodedHtml()
+
+                else -> {
+                    appLogger.error("Unrecognized HTML Type: $selectedHtmlContentType (Defaulting to Mobile)")
+                    wikipediaPage.getMobileHtmlForPage(pageTitle)?.getBase64EncodedHtml()
                 }
-            } else {
-                appLogger.error("Failed to fetch HTML for page $pageTitle")
-                currentDetailPane.update {
-                    HomeDetailUiState.Error("Failed to fetch HTML for page $pageTitle")
-                }
+            }
+
+            currentDetailPane.update {
+                HomeDetailUiState.Success(
+                    pageTitle = pageTitle,
+                    htmlContent = html ?: "",
+                    webViewClient = webViewClient
+                )
             }
         }
     }
