@@ -37,7 +37,17 @@ data class SearchResultItem(
     val title: String,
     val description: String,
     val thumbnailImageUrl: String? = null
-) : Parcelable
+) : Parcelable {
+    fun getLoadableThumbnailUrl(): String? {
+        return if (thumbnailImageUrl?.startsWith("//") == true) {
+            "https:$thumbnailImageUrl"
+        } else {
+            null
+        }
+    }
+
+
+}
 
 /**
  * Represents the UI state for the home search screen (List Pane).

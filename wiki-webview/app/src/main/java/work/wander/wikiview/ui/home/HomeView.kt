@@ -224,7 +224,7 @@ fun HomeSearchResultItemView(
         val headerImageSize = 36.dp
         if (searchResult.thumbnailImageUrl != null) {
             PicassoImage(
-                url = searchResult.thumbnailImageUrl,
+                url = searchResult.getLoadableThumbnailUrl(),
                 modifier = Modifier.size(headerImageSize)
             )
         } else {
