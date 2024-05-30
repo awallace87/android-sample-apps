@@ -14,6 +14,7 @@ import work.wander.pomodogetter.framework.annotation.BackgroundThread
 import work.wander.pomodogetter.framework.logging.AppLogger
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.time.Duration
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -36,7 +37,24 @@ class HomeViewModel @Inject constructor(
         emptyList()
     )
 
+    private val timedTasksStateFlow = taskDataRepository.getAllTimedTasks().map { timedTaskEntities ->
+        timedTaskEntities.map { timedTaskEntity ->
+            TimedTaskUiModel(
+                id = timedTaskEntity.taskId,
+                name = timedTaskEntity.name,
+                initialDuration = timedTaskEntity.initialDuration,
+                remainingDuration = timedTaskEntity.durationRemaining,
+            )
+        }
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(),
+        emptyList()
+    )
+
     val tasks : StateFlow<List<TaskUiModel>> = tasksStateFlow
+
+    val timedTasks: StateFlow<List<TimedTaskUiModel>> = timedTasksStateFlow
 
     fun addNewTask(name: String) {
         viewModelScope.launch(backgroundDispatcher) {
@@ -53,6 +71,13 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    fun addNewTimedTask(taskName: String, duration: Duration) {
+        viewModelScope.launch(backgroundDispatcher) {
+            val newTimedTaskEntity = taskDataRepository.addNewTimedTask(taskName, duration)
+            appLogger.debug("New timed task added: $newTimedTaskEntity")
+        }
+    }
 }
 
 data class TaskUiModel(
@@ -61,3 +86,17 @@ data class TaskUiModel(
     val isCompleted: Boolean,
     val dueDate: LocalDate? = null,
 )
+
+data class TimedTaskUiModel(
+    val id: Long,
+    val name: String,
+    val initialDuration: Duration,
+    val remainingDuration: Duration = initialDuration,
+    val dueDate: LocalDate? = null,
+) {
+    val isCompleted: Boolean
+        get() = Duration.ZERO >= remainingDuration
+
+    val hasNotStarted: Boolean
+        get() = initialDuration == remainingDuration
+}

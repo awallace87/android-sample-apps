@@ -109,6 +109,18 @@ class PomodoroTimerScreenViewModel @Inject constructor(
         }
     }
 
+    fun bindToTimedTask(taskId: Long) {
+        // Use better null indicator
+        if (taskId > 0) {
+            // TODO - Get the initial duration from the task
+            pomodoroServiceLauncher.resetTimer(initialDuration)
+            pomodoroServiceLauncher.bindToTimedTask(taskId)
+        } else {
+            logger.error("Invalid task ID to bind to: $taskId")
+        }
+
+    }
+
     companion object {
         private const val INITIAL_DURATION_KEY = "initial"
     }

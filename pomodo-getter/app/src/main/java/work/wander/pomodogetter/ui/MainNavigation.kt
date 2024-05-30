@@ -26,7 +26,13 @@ object Home
 object Settings
 
 @Serializable
-object PomodoroTimer
+data class PomodoroTimer(
+    val taskId: Long = ABSENT_TASK_ID
+) {
+    companion object {
+        const val ABSENT_TASK_ID = -1L
+    }
+}
 
 @Serializable
 data class TaskDetail(val taskId: Long)
@@ -38,8 +44,10 @@ fun MainNavigation() {
         composable<Home> {
             val homeViewModel: HomeViewModel = hiltViewModel<HomeViewModel>()
             val tasks = homeViewModel.tasks.collectAsState().value
+            val timedTasks = homeViewModel.timedTasks.collectAsState().value
             HomeView(
                 tasks = tasks,
+                timedTasks = timedTasks,
                 modifier = Modifier.fillMaxSize(),
                 onNewTaskAdded = { taskName ->
                     homeViewModel.addNewTask(taskName)
@@ -50,8 +58,14 @@ fun MainNavigation() {
                 onTaskSelected = { taskModel ->
                     navController.navigate(TaskDetail(taskModel.id))
                 },
+                onNewTimedTaskAdded = { taskName, duration ->
+                    homeViewModel.addNewTimedTask(taskName, duration)
+                },
+                onTimedTaskSelected = {
+                    navController.navigate(PomodoroTimer(it.id))
+                },
                 onStartPomodoroSelected = {
-                    navController.navigate(PomodoroTimer)
+                    navController.navigate(PomodoroTimer())
                 },
                 onSettingsSelected = {
                     navController.navigate(Settings)
@@ -94,9 +108,12 @@ fun MainNavigation() {
                 }
             )
         }
-        composable<PomodoroTimer> {
+        composable<PomodoroTimer> { backStackEntry ->
+            val pomodoroTimerDetails: PomodoroTimer = backStackEntry.toRoute()
             val pomodoroTimerViewModel: PomodoroTimerScreenViewModel =
                 hiltViewModel<PomodoroTimerScreenViewModel>()
+
+            pomodoroTimerViewModel.bindToTimedTask(pomodoroTimerDetails.taskId)
 
             PomodoroTimerView(
                 uiState = pomodoroTimerViewModel.uiState.collectAsState().value,

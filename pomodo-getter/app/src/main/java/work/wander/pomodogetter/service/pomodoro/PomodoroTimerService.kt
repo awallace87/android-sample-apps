@@ -13,6 +13,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import work.wander.pomodogetter.data.pomodoro.PomodoroDatabase
 import work.wander.pomodogetter.data.pomodoro.entity.CompletedPomodoro
+import work.wander.pomodogetter.data.tasks.TaskDataRepository
+import work.wander.pomodogetter.data.tasks.entity.TimedTaskDataEntity
 import work.wander.pomodogetter.framework.logging.AppLogger
 import work.wander.pomodogetter.framework.time.TimerManager
 import java.time.Instant
@@ -32,6 +34,10 @@ class PomodoroTimerService : LifecycleService() {
 
     // TODO use repository instead of direct database access
     @Inject lateinit var pomodoroDatabase: PomodoroDatabase
+
+    @Inject lateinit var taskDataRepository: TaskDataRepository
+
+    private var boundTimedTask: TimedTaskDataEntity? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -74,6 +80,15 @@ class PomodoroTimerService : LifecycleService() {
                         it.getLongExtra(EXTRA_DURATION_MILLIS, 25.minutes.inWholeMilliseconds)
                     resetTimerService(durationMillis.milliseconds)
                 }
+                ACTION_BIND_TIMED_TASK -> {
+                    logger.debug("PomodoroTimerService.onStartCommand: ACTION_BIND_TIMED_TASK")
+                    val taskId = it.getLongExtra(EXTRA_TIMED_TASK_ID, -1)
+                    bindToTimedTask(taskId)
+                }
+                ACTION_UNBIND_TIMED_TASK -> {
+                    logger.debug("PomodoroTimerService.onStartCommand: ACTION_UNBIND_TIMED_TASK")
+                    unbindFromTimedTask()
+                }
             }
         }
         return super.onStartCommand(intent, flags, startId)
@@ -83,16 +98,37 @@ class PomodoroTimerService : LifecycleService() {
         when (timerState) {
             is TimerManager.TimerState.Running -> {
                 startForeground(NOTIFICATION_ID, createNotification(timerState))
+                updateBoundTimedTask(timerState)
             }
             is TimerManager.TimerState.Paused -> {
                 startForeground(NOTIFICATION_ID, createNotification(timerState))
+                updateBoundTimedTask(timerState)
             }
             is TimerManager.TimerState.Completed -> {
                 startForeground(NOTIFICATION_ID, createNotification(timerState))
+                updateBoundTimedTask(timerState)
                 logCompletedPomodoro(timerState)
+                // TODO make cleanup neater
+                unbindFromTimedTask()
             }
             else -> {
                 stopForeground(STOP_FOREGROUND_REMOVE)
+            }
+        }
+    }
+
+    private fun updateBoundTimedTask(timerState: TimerManager.TimerState) {
+        boundTimedTask?.let {
+            lifecycleScope.launch {
+                val updatedTimedTask = when(timerState) {
+                    is TimerManager.TimerState.Running -> it.copy(durationRemaining = timerState.remainingDuration)
+                    is TimerManager.TimerState.Paused -> it.copy(durationRemaining = timerState.remainingDuration)
+                    is TimerManager.TimerState.Completed -> it.copy(durationRemaining = Duration.ZERO)
+                    else -> null
+                }
+                if (updatedTimedTask != null) {
+                    taskDataRepository.updateTimedTask(updatedTimedTask)
+                }
             }
         }
     }
@@ -127,6 +163,20 @@ class PomodoroTimerService : LifecycleService() {
 
     private fun resumeTimerService() {
         timerManager.resumeTimer(TIMER_MANAGER_KEY)
+    }
+
+    private fun bindToTimedTask(taskId: Long) {
+        // TODO Add state handling for existing timer. Assuming use only in pause/initial state
+        lifecycleScope.launch {
+            val timedTask = taskDataRepository.getTimedTaskById(taskId)
+            if (timedTask != null) {
+                boundTimedTask = timedTask
+            }
+        }
+    }
+
+    private fun unbindFromTimedTask() {
+        boundTimedTask = null
     }
 
     private fun createNotification(timerState: TimerManager.TimerState) : Notification {
@@ -188,13 +238,17 @@ class PomodoroTimerService : LifecycleService() {
     companion object {
         // TODO hide values as internal or private as needed
         const val NOTIFICATION_ID = 1
+
         const val ACTION_RESET = "work.wander.pomodogetter.service.pomodoro.RESET"
         const val ACTION_START = "work.wander.pomodogetter.service.pomodoro.START"
         const val ACTION_PAUSE = "work.wander.pomodogetter.service.pomodoro.PAUSE"
         const val ACTION_RESUME = "work.wander.pomodogetter.service.pomodoro.RESUME"
         const val ACTION_STOP = "work.wander.pomodogetter.service.pomodoro.STOP"
+        const val ACTION_BIND_TIMED_TASK = "work.wander.pomodogetter.service.pomodoro.BIND_TIMED_TASK"
+        const val ACTION_UNBIND_TIMED_TASK = "work.wander.pomodogetter.service.pomodoro.UNBIND_TIMED_TASK"
 
         const val EXTRA_DURATION_MILLIS = "work.wander.pomodogetter.service.pomodoro.EXTRA_DURATION_MILLIS"
+        const val EXTRA_TIMED_TASK_ID = "work.wander.pomodogetter.service.pomodoro.EXTRA_TIMED_TASK_ID"
 
         const val NOTIFICATION_CHANNEL_ID = "PomodoroTimerServiceChannel"
         const val NOTIFICATION_CHANNEL_NAME = "Pomodoro Timer"
@@ -234,6 +288,17 @@ class PomodoroTimerService : LifecycleService() {
             val intent = Intent(context, PomodoroTimerService::class.java)
             intent.action = ACTION_STOP
             context.startService(intent)
+        }
+
+        fun bindToTimedTask(taskId: Long) {
+            val intent = Intent(context, PomodoroTimerService::class.java)
+            intent.action = ACTION_BIND_TIMED_TASK
+            intent.putExtra(EXTRA_TIMED_TASK_ID, taskId)
+        }
+
+        fun unbindFromTimedTask() {
+            val intent = Intent(context, PomodoroTimerService::class.java)
+            intent.action = ACTION_UNBIND_TIMED_TASK
         }
 
         fun pauseTimerIntent(): PendingIntent {

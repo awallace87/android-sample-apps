@@ -1,5 +1,5 @@
 [versions]
-agp = "8.4.0"
+agp = "8.4.1"
 kotlin = "1.9.23"
 ksp = "1.9.23-1.0.19"
 coreKtx = "1.13.1"
@@ -22,7 +22,6 @@ workManager = "2.9.0"
 hiltWork = "1.2.0"
 okHttpBom = "4.12.0"
 okHttpMockWebServer = "4.12.0"
-moshi = "1.15.1"
 picasso = "2.8"
 truthAssert = "1.4.2"
 coilImage = "2.6.0"
@@ -89,10 +88,6 @@ okhttp-bom = { group = "com.squareup.okhttp3", name = "okhttp-bom", version.ref 
 okhttp-core = { group = "com.squareup.okhttp3", name = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor" }
 okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okHttpMockWebServer" }
-
-# Moshi
-moshi-core = { group = "com.squareup.moshi", name = "moshi", version.ref = "moshi" }
-moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshi" }
 
 # Picasso
 picasso = { group = "com.squareup.picasso", name = "picasso", version.ref = "picasso" }
