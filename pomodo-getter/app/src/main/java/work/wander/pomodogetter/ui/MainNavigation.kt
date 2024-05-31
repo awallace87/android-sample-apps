@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 import work.wander.pomodogetter.ui.home.HomeView
 import work.wander.pomodogetter.ui.home.HomeViewModel
 import work.wander.pomodogetter.ui.pomodoro.PomodoroTimerView
-import work.wander.pomodogetter.ui.pomodoro.PomodoroTimerScreenViewModel
+import work.wander.pomodogetter.ui.pomodoro.PomodoroTimerViewModel
 import work.wander.pomodogetter.ui.settings.ApplicationSettingsView
 import work.wander.pomodogetter.ui.settings.ApplicationSettingsViewModel
 import work.wander.pomodogetter.ui.task.TaskDetailView
@@ -27,10 +27,10 @@ object Settings
 
 @Serializable
 data class PomodoroTimer(
-    val taskId: Long = ABSENT_TASK_ID
+    val boundTimedTaskId: Long = UNBOUND_TASK_ID
 ) {
     companion object {
-        const val ABSENT_TASK_ID = -1L
+        const val UNBOUND_TASK_ID = -2L
     }
 }
 
@@ -110,13 +110,17 @@ fun MainNavigation() {
         }
         composable<PomodoroTimer> { backStackEntry ->
             val pomodoroTimerDetails: PomodoroTimer = backStackEntry.toRoute()
-            val pomodoroTimerViewModel: PomodoroTimerScreenViewModel =
-                hiltViewModel<PomodoroTimerScreenViewModel>()
+            val pomodoroTimerViewModel: PomodoroTimerViewModel =
+                hiltViewModel<PomodoroTimerViewModel>()
 
-            pomodoroTimerViewModel.bindToTimedTask(pomodoroTimerDetails.taskId)
+            if (pomodoroTimerDetails.boundTimedTaskId != null) {
+                pomodoroTimerViewModel.setTimedTaskId(pomodoroTimerDetails.boundTimedTaskId)
+            }
+
+            val uiState = pomodoroTimerViewModel.uiState.collectAsState().value
 
             PomodoroTimerView(
-                uiState = pomodoroTimerViewModel.uiState.collectAsState().value,
+                uiState = uiState,
                 modifier = Modifier.fillMaxSize(),
                 onTimerDurationChange = { duration ->
                     pomodoroTimerViewModel.setInitialDuration(duration)

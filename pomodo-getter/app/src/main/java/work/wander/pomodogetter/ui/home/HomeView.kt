@@ -759,7 +759,7 @@ fun HomeTopAppBar(
     TopAppBar(
         title = {
             Text(
-                "PoMoDoGoGetter",
+                "PoMoDoGetter",
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center,

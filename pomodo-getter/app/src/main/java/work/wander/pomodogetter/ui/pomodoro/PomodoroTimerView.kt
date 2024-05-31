@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,10 +63,10 @@ fun PomodoroTimerView(
 ) {
     Scaffold(
         modifier = modifier,
-        content = {
+        content = { paddingValues ->
             Box(
                 modifier = Modifier
-                    .padding(it)
+                    .padding(paddingValues)
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
@@ -77,8 +78,6 @@ fun PomodoroTimerView(
                             modifier = Modifier
                                 .fillMaxSize()
                         )
-                        // TODO there has to be a better way to do this
-                        onTimerReady()
                     }
 
                     is PomodoroTimerUiState.Running -> {
@@ -109,8 +108,8 @@ fun PomodoroTimerView(
                         uiState,
                         Modifier.fillMaxSize(),
                         onTimerStart,
-                        onDurationChange = {
-                            onTimerDurationChange(it)
+                        onDurationChange = { duration ->
+                            onTimerDurationChange(duration)
                         })
                 }
             }
@@ -165,14 +164,51 @@ fun ReadyTimerView(
 
         val duration = uiState.initialDuration
 
-        TimerDurationSelector(
-            initialDuration = duration,
-            onDurationChange = onDurationChange,
-            onTimerStart = onTimerStart,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(200.dp)
-        )
+
+
+        if (uiState.boundTask != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    TimerDisplay(
+                        millisRemaining = uiState.boundTask.taskDuration.inWholeMilliseconds,
+                        // TODO change to a style parameter instead
+                        isRunning = true,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .clickable { onTimerStart() },
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = "Task: ${uiState.boundTask.taskName}",
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            }
+        } else {
+            TimerDurationSelector(
+                initialDuration = duration,
+                onDurationChange = onDurationChange,
+                onTimerStart = onTimerStart,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(200.dp)
+            )
+        }
     }
 }
 
@@ -197,6 +233,22 @@ fun CompletedTimerView(
             Spacer(modifier = Modifier.size(16.dp))
             Button(onClick = onTimerReady) {
                 Text(text = "Ready")
+            }
+            if (uiState.boundTask != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                ) {
+                    Text(
+                        text = "Task: ${uiState.boundTask.taskName}",
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
 
         }
@@ -245,6 +297,23 @@ fun PausedTimerView(
             modifier = Modifier.size(320.dp),
             isRunning = false,
         )
+        if (uiState.boundTask != null) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
+            ) {
+                Text(
+                    text = "Task: ${uiState.boundTask.taskName}",
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
     }
 }
 
@@ -292,6 +361,23 @@ fun RunningTimerView(
                 .align(Alignment.Center),
             isRunning = true,
         )
+        if (uiState.boundTask != null) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
+            ) {
+                Text(
+                    text = "Task: ${uiState.boundTask.taskName}",
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
 
     }
 }
