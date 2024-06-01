@@ -3,6 +3,8 @@ package work.wander.pomodogetter.ui
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -113,9 +115,15 @@ fun MainNavigation() {
             val pomodoroTimerViewModel: PomodoroTimerViewModel =
                 hiltViewModel<PomodoroTimerViewModel>()
 
-            if (pomodoroTimerDetails.boundTimedTaskId != null) {
+            // Remember if setTimedTaskId has been called
+            val timedTaskIdSet = remember(pomodoroTimerDetails.boundTimedTaskId) { mutableStateOf(false) }
+
+            // Only call setTimedTaskId if it hasn't been called yet for this taskId
+            if (!timedTaskIdSet.value) {
                 pomodoroTimerViewModel.setTimedTaskId(pomodoroTimerDetails.boundTimedTaskId)
+                timedTaskIdSet.value = true
             }
+
 
             val uiState = pomodoroTimerViewModel.uiState.collectAsState().value
 

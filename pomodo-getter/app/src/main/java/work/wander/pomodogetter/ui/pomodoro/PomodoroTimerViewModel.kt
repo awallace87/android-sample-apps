@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -20,6 +21,7 @@ import javax.inject.Inject
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 sealed class PomodoroTimerUiState {
     object Initial : PomodoroTimerUiState()
@@ -75,10 +77,12 @@ class PomodoroTimerViewModel @Inject constructor(
                 }
                 when (timerState) {
                     TimerManager.TimerState.Uninitialized -> PomodoroTimerUiState.Initial
-                    is TimerManager.TimerState.Ready -> PomodoroTimerUiState.Ready(
-                        currentBoundTask,
-                        timerState.initialDuration
-                    )
+                    is TimerManager.TimerState.Ready -> {
+                        PomodoroTimerUiState.Ready(
+                            currentBoundTask,
+                            timerState.initialDuration
+                        )
+                    }
 
                     is TimerManager.TimerState.Running -> PomodoroTimerUiState.Running(
                         currentBoundTask,
@@ -98,10 +102,11 @@ class PomodoroTimerViewModel @Inject constructor(
                     )
                 }
             }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, PomodoroTimerUiState.Initial)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(stopTimeout = 2.seconds), PomodoroTimerUiState.Initial)
 
 
     fun onTimerReady() {
+        // Might not be necessary once reset logic is better handled
         val currentTask = boundTask
         if (currentTask == null) {
             pomodoroServiceLauncher.resetTimer(defaultTimerDuration)
@@ -148,7 +153,11 @@ class PomodoroTimerViewModel @Inject constructor(
         val currentState = uiState.value
         if (currentState is PomodoroTimerUiState.Running || currentState is PomodoroTimerUiState.Paused) {
             pomodoroServiceLauncher.stopTimer()
-            boundTask = null
+            // Cancel existing task binding (to fix incorrect time in Ready state)
+            if (boundTask != null) {
+                boundTask = null
+            }
+            pomodoroServiceLauncher.resetTimer(defaultTimerDuration)
         } else {
             logger.error("Invalid state to cancel timer: $currentState")
         }
@@ -156,23 +165,21 @@ class PomodoroTimerViewModel @Inject constructor(
 
     fun setTimedTaskId(taskId: Long) {
         viewModelScope.launch(backgroundDispatcher) {
-            // Need to check if already bound to task, since this is called on recomposition
-            val currentTask = boundTask
-            if (currentTask != null && currentTask.taskId == taskId) {
-                logger.debug("Already bound to specified task: $boundTask, ignoring set")
-                return@launch
-            }
             val task = taskDataRepository.getTimedTaskById(taskId)
             if (task != null) {
                 boundTask = PomodoroBoundTask(taskId, task.name, task.durationRemaining)
                 pomodoroServiceLauncher.resetTimer(task.durationRemaining)
             } else {
-                logger.error("No task found for ID: $taskId")
+                logger.info("No task found for ID: $taskId, setting to default timer duration")
+                pomodoroServiceLauncher.resetTimer(defaultTimerDuration)
             }
         }
     }
 
-    private fun updateBoundTask(pomodoroBoundTask: PomodoroBoundTask, timerState: TimerManager.TimerState) {
+    private fun updateBoundTask(
+        pomodoroBoundTask: PomodoroBoundTask,
+        timerState: TimerManager.TimerState
+    ) {
         viewModelScope.launch(backgroundDispatcher) {
             logger.debug("Updating task: $pomodoroBoundTask with state: $timerState")
             val currentTask = taskDataRepository.getTimedTaskById(pomodoroBoundTask.taskId)
@@ -183,16 +190,19 @@ class PomodoroTimerViewModel @Inject constructor(
 
             val updatedTask: TimedTaskDataEntity? = when (timerState) {
                 is TimerManager.TimerState.Running -> {
-                   currentTask.copy(durationRemaining = timerState.remainingDuration)
+                    currentTask.copy(durationRemaining = timerState.remainingDuration)
 
                 }
+
                 is TimerManager.TimerState.Paused -> {
                     currentTask.copy(durationRemaining = timerState.remainingDuration)
 
                 }
+
                 is TimerManager.TimerState.Completed -> {
                     currentTask.copy(durationRemaining = ZERO, completedAt = Instant.now())
                 }
+
                 else -> {
                     // No need to update task for other states
                     null

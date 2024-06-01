@@ -1,5 +1,7 @@
 package work.wander.pomodogetter.ui.pomodoro
 
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -33,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,6 +64,25 @@ fun PomodoroTimerView(
     onTimerCancel: () -> Unit = {},
     onTimerDurationChange: (Duration) -> Unit = {},
 ) {
+    val backPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val backPressedCallback = remember {
+        object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                onTimerCancel()
+
+                isEnabled = false
+                backPressedDispatcher?.onBackPressed()
+            }
+        }
+    }
+
+    DisposableEffect(backPressedDispatcher) {
+        backPressedDispatcher?.addCallback(backPressedCallback)
+        onDispose {
+            backPressedCallback.remove()
+        }
+    }
+
     Scaffold(
         modifier = modifier,
         content = { paddingValues ->
@@ -70,8 +92,6 @@ fun PomodoroTimerView(
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-
-
                 when (uiState) {
                     is PomodoroTimerUiState.Initial -> {
                         InitialTimerView(
@@ -163,8 +183,6 @@ fun ReadyTimerView(
         )
 
         val duration = uiState.initialDuration
-
-
 
         if (uiState.boundTask != null) {
             Box(
