@@ -14,7 +14,6 @@ data class TimedTaskDataEntity(
     val initialDuration: Duration,
     val durationRemaining: Duration = initialDuration,
     val createdAt: Instant,
-    val firstStartedAt: Instant? = null,
     val completedAt: Instant? = null,
 ) {
     val isCompleted: Boolean get() = completedAt != null

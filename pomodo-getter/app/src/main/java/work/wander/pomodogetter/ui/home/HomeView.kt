@@ -96,7 +96,8 @@ fun HomeView(
         },
         floatingActionButton = {
             HomeFloatingActionButton(
-                onNewTaskAdded = onNewTaskAdded
+                onNewTaskAdded = onNewTaskAdded,
+                onNewTimedTaskAdded = onNewTimedTaskAdded,
             )
         }
     ) {
@@ -808,65 +809,110 @@ fun HomeTopAppBar(
 fun HomeFloatingActionButton(
     modifier: Modifier = Modifier,
     onNewTaskAdded: (String) -> Unit = {},
+    onNewTimedTaskAdded: (String, Duration) -> Unit = { _, _ -> },
     isEditingNewTaskInitial: Boolean = false,
 ) {
     val isEditingNewTask = remember { mutableStateOf(isEditingNewTaskInitial) }
+    val durationInMinutes = remember { mutableFloatStateOf(25f) }
+    val isTimedTask = remember { mutableStateOf(false) }
+
     if (isEditingNewTask.value) {
-        Row(
+        Column(
             modifier = modifier
-                .padding(start = 30.dp, bottom = 16.dp)
                 .clip(MaterialTheme.shapes.large)
                 .background(MaterialTheme.colorScheme.primaryContainer),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
         ) {
-            val newTaskName = remember { mutableStateOf("") }
-            val focusRequester = remember { FocusRequester() }
-            val keyboardController = LocalSoftwareKeyboardController.current
-
-            LaunchedEffect(Unit) {
-                delay(50)
-                focusRequester.requestFocus()
-            }
-
-            OutlinedTextField(
-                value = newTaskName.value,
-                onValueChange = { newTaskName.value = it },
+            Row(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .focusRequester(focusRequester),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    disabledBorderColor = MaterialTheme.colorScheme.tertiary,
-                    errorBorderColor = MaterialTheme.colorScheme.error,
-                ),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done,
-                    keyboardType = KeyboardType.Ascii
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        keyboardController?.hide()
-                        focusRequester.freeFocus()
-                        onNewTaskAdded(newTaskName.value)
-                        isEditingNewTask.value = false
-                    }
-                )
-            )
-            IconButton(
-                onClick = {
-                    isEditingNewTask.value = false
-                    newTaskName.value = ""
-                },
-                modifier = Modifier.padding(end = 8.dp),
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Cancel,
-                    contentDescription = "Cancel Adding New Task",
+                    imageVector = Icons.Outlined.Timer,
+                    contentDescription = "Timed Task",
                     modifier = Modifier.size(36.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
+                Checkbox(checked = isTimedTask.value, onCheckedChange = {
+                    isTimedTask.value = it
+                })
+                if (isTimedTask.value) {
+                    Slider(
+                        value = durationInMinutes.floatValue,
+                        onValueChange = {
+                            durationInMinutes.floatValue = it
+                        },
+                        valueRange = 5f..60f,
+                        steps = 55,
+                        modifier = Modifier
+                            .weight(1f),
+                    )
+                    Text(
+                        text = "${durationInMinutes.floatValue.fastRoundToInt()} minutes",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                val newTaskName = remember { mutableStateOf("") }
+                val focusRequester = remember { FocusRequester() }
+                val keyboardController = LocalSoftwareKeyboardController.current
+
+                LaunchedEffect(Unit) {
+                    delay(50)
+                    focusRequester.requestFocus()
+                }
+
+                OutlinedTextField(
+                    value = newTaskName.value,
+                    onValueChange = { newTaskName.value = it },
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .focusRequester(focusRequester),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        disabledBorderColor = MaterialTheme.colorScheme.tertiary,
+                        errorBorderColor = MaterialTheme.colorScheme.error,
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done,
+                        keyboardType = KeyboardType.Ascii
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            keyboardController?.hide()
+                            focusRequester.freeFocus()
+                            if (isTimedTask.value) {
+                                onNewTimedTaskAdded(newTaskName.value, durationInMinutes.floatValue.fastRoundToInt().minutes)
+                            } else {
+                                onNewTaskAdded(newTaskName.value)
+                            }
+                            isEditingNewTask.value = false
+                        }
+                    )
+                )
+                IconButton(
+                    onClick = {
+                        isEditingNewTask.value = false
+                        newTaskName.value = ""
+                    },
+                    modifier = Modifier.padding(end = 8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Cancel,
+                        contentDescription = "Cancel Adding New Task",
+                        modifier = Modifier.size(36.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
         }
     } else {
