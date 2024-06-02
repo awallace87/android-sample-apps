@@ -17,6 +17,7 @@ import work.wander.pomodogetter.data.tasks.entity.TimedTaskDataEntity
 import work.wander.pomodogetter.framework.annotation.BackgroundThread
 import work.wander.pomodogetter.framework.logging.AppLogger
 import work.wander.pomodogetter.framework.time.TimerManager
+import work.wander.pomodogetter.framework.toast.Toaster
 import work.wander.pomodogetter.service.pomodoro.PomodoroTimerService
 import java.time.Instant
 import javax.inject.Inject
@@ -62,6 +63,7 @@ class PomodoroTimerViewModel @Inject constructor(
     private val pomodoroServiceLauncher: PomodoroTimerService.Launcher,
     private val taskDataRepository: TaskDataRepository,
     @BackgroundThread private val backgroundDispatcher: CoroutineDispatcher,
+    private val toaster: Toaster,
     private val logger: AppLogger,
 ) : ViewModel() {
 
@@ -170,8 +172,14 @@ class PomodoroTimerViewModel @Inject constructor(
         viewModelScope.launch(backgroundDispatcher) {
             val task = taskDataRepository.getTimedTaskById(taskId)
             if (task != null) {
-                boundTask = PomodoroBoundTask(taskId, task.name, task.durationRemaining)
-                pomodoroServiceLauncher.resetTimer(task.durationRemaining)
+                if (task.isCompleted) {
+                    logger.warn("Task is already completed, setting to default timer duration")
+                    pomodoroServiceLauncher.resetTimer(defaultTimerDuration)
+                    toaster.showToast("Task is already completed. Resetting to default timer duration")
+                } else {
+                    boundTask = PomodoroBoundTask(taskId, task.name, task.durationRemaining)
+                    pomodoroServiceLauncher.resetTimer(task.durationRemaining)
+                }
             } else {
                 logger.info("No task found for ID: $taskId, setting to default timer duration")
                 pomodoroServiceLauncher.resetTimer(defaultTimerDuration)

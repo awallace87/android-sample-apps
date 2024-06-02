@@ -31,8 +31,11 @@ object Settings
 data class PomodoroTimer(
     val boundTimedTaskId: Long = UNBOUND_TASK_ID
 ) {
+    val hasTaskId: Boolean
+        get() = boundTimedTaskId != UNBOUND_TASK_ID
+
     companion object {
-        const val UNBOUND_TASK_ID = -2L
+        const val UNBOUND_TASK_ID = -7L
     }
 }
 
@@ -120,10 +123,11 @@ fun MainNavigation() {
 
             // Only call setTimedTaskId if it hasn't been called yet for this taskId
             if (!timedTaskIdSet.value) {
-                pomodoroTimerViewModel.setTimedTaskId(pomodoroTimerDetails.boundTimedTaskId)
+                if (pomodoroTimerDetails.hasTaskId) {
+                    pomodoroTimerViewModel.setTimedTaskId(pomodoroTimerDetails.boundTimedTaskId)
+                }
                 timedTaskIdSet.value = true
             }
-
 
             val uiState = pomodoroTimerViewModel.uiState.collectAsState().value
 

@@ -37,7 +37,8 @@ class PomodoroTimerViewModelTest {
     private val taskDataRepository = mockk<TaskDataRepository>()
     private val logger = mockk<AppLogger>(relaxed = true)
 
-    private val timerStateFlow = MutableStateFlow<TimerManager.TimerState>(TimerManager.TimerState.Uninitialized)
+    private val timerStateFlow =
+        MutableStateFlow<TimerManager.TimerState>(TimerManager.TimerState.Uninitialized)
 
     private val testCoroutineScheduler = TestCoroutineScheduler()
     private val testDispatcher = StandardTestDispatcher(testCoroutineScheduler)
@@ -72,7 +73,7 @@ class PomodoroTimerViewModelTest {
 
     @Test
     fun `onConstruction with ready timer UI state is uninitialized`() = runTest {
-        timerStateFlow.update {  TimerManager.TimerState.Ready(30.minutes, 1000) }
+        timerStateFlow.update { TimerManager.TimerState.Ready(30.minutes, 1000) }
 
         testCoroutineScheduler.advanceUntilIdle()
 
@@ -86,6 +87,24 @@ class PomodoroTimerViewModelTest {
         viewModel.onTimerReady()
 
         coVerify { pomodoroServiceLauncher.resetTimer(any()) }
+    }
+
+    @Test
+    fun `onTimerReady does not call resetTimer when a task is bound`() = runTest {
+        coEvery { taskDataRepository.getTimedTaskById(1) } returns TimedTaskDataEntity(
+            1,
+            "Task 1",
+            null,
+            30.minutes,
+            createdAt = Instant.now()
+        )
+        viewModel.setTimedTaskId(1)
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.resetTimer(30.minutes) }
+
+        viewModel.onTimerReady()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.resetTimer(30.minutes) }
     }
 
     @Test
@@ -112,5 +131,27 @@ class PomodoroTimerViewModelTest {
         viewModel.setTimedTaskId(1)
 
         assertEquals(null, viewModel.boundTask)
+    }
+
+    @Test
+    fun `startTimer does not call startTimer when UI state is not ready`() = runTest {
+        viewModel.startTimer()
+
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 0) { pomodoroServiceLauncher.startTimer() }
+    }
+
+    @Test
+    fun `startTimer calls startTimer when UI state is ready`() = runTest {
+        timerStateFlow.update { TimerManager.TimerState.Ready(30.minutes, 1000) }
+
+        testCoroutineScheduler.advanceUntilIdle()
+
+        viewModel.startTimer()
+
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify { pomodoroServiceLauncher.startTimer() }
     }
 }
