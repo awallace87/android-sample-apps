@@ -1,5 +1,6 @@
 package work.wander.pomodogetter.ui.pomodoro
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -8,6 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import work.wander.pomodogetter.data.tasks.TaskDataRepository
@@ -63,7 +65,8 @@ class PomodoroTimerViewModel @Inject constructor(
     private val logger: AppLogger,
 ) : ViewModel() {
 
-    private var boundTask: PomodoroBoundTask? = null
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    internal var boundTask: PomodoroBoundTask? = null
 
     private var defaultTimerDuration: Duration = 25.minutes
 
@@ -102,7 +105,7 @@ class PomodoroTimerViewModel @Inject constructor(
                     )
                 }
             }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(stopTimeout = 2.seconds), PomodoroTimerUiState.Initial)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, PomodoroTimerUiState.Initial)
 
 
     fun onTimerReady() {

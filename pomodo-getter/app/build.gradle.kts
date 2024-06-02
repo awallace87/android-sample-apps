@@ -149,6 +149,12 @@ dependencies {
 
     // Truth
     testImplementation(libs.truth.assert)
+
+    // Mockk
+    testImplementation(libs.mockk)
+
+    // Coroutines Test
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 protobuf {
