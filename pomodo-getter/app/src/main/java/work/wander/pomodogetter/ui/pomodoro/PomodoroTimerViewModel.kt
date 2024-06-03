@@ -29,13 +29,13 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Sealed class representing the different states of the Pomodoro timer.
+ * Sealed interface representing the different states of the Pomodoro timer.
  */
 sealed interface PomodoroTimerUiState {
     /**
      * Represents the initial state of the Pomodoro timer.
      */
-    object Initial : PomodoroTimerUiState
+    data object Initial : PomodoroTimerUiState
 
     /**
      * Represents the ready state of the Pomodoro timer.

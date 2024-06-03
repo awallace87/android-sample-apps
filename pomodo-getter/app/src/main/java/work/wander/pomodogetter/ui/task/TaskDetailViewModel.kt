@@ -15,12 +15,31 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 /**
- * UI state for the task detail screen.
+ * Sealed interface representing the different states of the task detail UI.
  */
 sealed interface TaskDetailUiState {
+    /**
+     * Represents the initial state of the task detail UI.
+     */
     data object Initial : TaskDetailUiState
+
+    /**
+     * Represents the loading state of the task detail UI.
+     *
+     * @property taskId The ID of the task being loaded.
+     */
     data class Loading(val taskId: Long) : TaskDetailUiState
+
+    /**
+     * Represents the state of the task detail UI when task data has been loaded.
+     *
+     * @property taskDetail The loaded task data.
+     */
     data class TaskDataLoaded(val taskDetail: TaskDataEntity) : TaskDetailUiState
+
+    /**
+     * Represents the state of the task detail UI when the task was not found.
+     */
     data object TaskNotFound : TaskDetailUiState
 }
 
