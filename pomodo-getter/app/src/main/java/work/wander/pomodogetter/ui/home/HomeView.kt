@@ -3,6 +3,7 @@ package work.wander.pomodogetter.ui.home
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.Top
@@ -13,21 +14,27 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Alarm
 import androidx.compose.material.icons.outlined.Cancel
+import androidx.compose.material.icons.outlined.CheckCircleOutline
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -38,16 +45,19 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -55,19 +65,28 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastRoundToInt
 import kotlinx.coroutines.delay
 import work.wander.pomodogetter.ui.theme.AppTheme
 import work.wander.pomogogetter.R
 import java.time.LocalDate
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.ZERO
+import kotlin.time.Duration.Companion.minutes
 
 @Composable
 fun HomeView(
     tasks: List<TaskUiModel>,
+    timedTasks: List<TimedTaskUiModel>,
     modifier: Modifier = Modifier,
     onNewTaskAdded: (String) -> Unit = {},
     onTaskSelected: (TaskUiModel) -> Unit = {},
+    onNewTimedTaskAdded: (String, Duration) -> Unit = { _, _ -> },
+    onTimedTaskSelected: (TimedTaskUiModel) -> Unit = {},
     onTaskCompletionChanged: (TaskUiModel, Boolean) -> Unit = { _, _ -> },
     onStartPomodoroSelected: () -> Unit = {},
     onSettingsSelected: () -> Unit = {},
@@ -79,7 +98,8 @@ fun HomeView(
         },
         floatingActionButton = {
             HomeFloatingActionButton(
-                onNewTaskAdded = onNewTaskAdded
+                onNewTaskAdded = onNewTaskAdded,
+                onNewTimedTaskAdded = onNewTimedTaskAdded,
             )
         }
     ) {
@@ -88,12 +108,16 @@ fun HomeView(
                 .fillMaxSize()
                 .padding(it)
         ) {
+
             HomeViewContents(
                 tasks = tasks,
+                timedTasks = timedTasks,
                 modifier = Modifier
                     .fillMaxSize(),
                 onNewTaskAdded = onNewTaskAdded,
                 onTaskSelected = onTaskSelected,
+                onNewTimedTaskAdded = onNewTimedTaskAdded,
+                onTimedTaskSelected = onTimedTaskSelected,
                 onTaskCompletionChanged = onTaskCompletionChanged,
                 onStartPomodoroSelected = onStartPomodoroSelected,
             )
@@ -104,14 +128,19 @@ fun HomeView(
 @Composable
 fun HomeViewContents(
     tasks: List<TaskUiModel>,
+    timedTasks: List<TimedTaskUiModel>,
     modifier: Modifier = Modifier,
     onNewTaskAdded: (String) -> Unit = {},
     onTaskSelected: (TaskUiModel) -> Unit = {},
+    onNewTimedTaskAdded: (String, Duration) -> Unit = { _, _ -> },
+    onTimedTaskSelected: (TimedTaskUiModel) -> Unit = {},
     onTaskCompletionChanged: (TaskUiModel, Boolean) -> Unit = { _, _ -> },
     onStartPomodoroSelected: () -> Unit = {},
 ) {
+    val scrollState = rememberScrollState()
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Top
     ) {
@@ -140,6 +169,21 @@ fun HomeViewContents(
             onTaskSelected = onTaskSelected,
             onTaskCompletionChanged = onTaskCompletionChanged,
         )
+        HomeAddNewTimedTaskCard(
+            modifier = Modifier
+                .padding(8.dp),
+            onNewTaskAdded = { name, duration ->
+                onNewTimedTaskAdded(name, duration)
+            },
+        )
+        HomeTimedTaskListCard(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
+                .heightIn(min = 200.dp, max = 400.dp),
+            timedTasks = timedTasks,
+            onTimedTaskSelected = onTimedTaskSelected,
+        )
     }
 }
 
@@ -161,7 +205,6 @@ fun HomeViewWelcomeCard(modifier: Modifier = Modifier) {
                     text = "Welcome to PomoDoGetter",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(8.dp),
-                    //color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -231,35 +274,305 @@ fun HomeViewTaskListCard(
                     textAlign = TextAlign.Center,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(tasks.size) { taskIndex ->
-                        val taskModel = tasks[taskIndex]
-                        HomeViewTaskListItem(
-                            task = taskModel,
-                            onTaskSelected = { onTaskSelected(taskModel) },
-                            onTaskCompletionChanged = { onTaskCompletionChanged(taskModel, it) }
-                        )
-                        if (taskIndex < tasks.size - 1) {
-                            HorizontalDivider(
-                                modifier = Modifier
-                                    .padding(top = 4.dp, start = 24.dp, end = 24.dp),
-                                thickness = 2.dp,
+                val incompleteTasks = tasks.filter { !it.isCompleted }
+                if (incompleteTasks.isEmpty()) {
+                    Text(
+                        text = "No tasks yet!",
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 100.dp, max = 400.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(incompleteTasks.size) { taskIndex ->
+                            val taskModel = incompleteTasks[taskIndex]
+                            HomeTaskListItem(
+                                task = taskModel,
+                                onTaskSelected = { onTaskSelected(taskModel) },
+                                onTaskCompletionChanged = { onTaskCompletionChanged(taskModel, it) }
                             )
+                            if (taskIndex < incompleteTasks.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier
+                                        .padding(top = 4.dp, start = 24.dp, end = 24.dp),
+                                    thickness = 2.dp,
+                                )
+                            }
                         }
                     }
-
                 }
                 Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Completed Tasks",
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier
+                        .padding(top = 8.dp, bottom = 4.dp)
+                        .fillMaxWidth(),
+                )
+                val completedTasks = tasks.filter { it.isCompleted }
+                if (completedTasks.isEmpty()) {
+                    Text(
+                        text = "No completed tasks yet!",
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 100.dp, max = 400.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(completedTasks.size) { taskIndex ->
+                            val taskModel = completedTasks[taskIndex]
+                            HomeTaskListItem(
+                                task = taskModel,
+                                onTaskSelected = { onTaskSelected(taskModel) },
+                                onTaskCompletionChanged = { onTaskCompletionChanged(taskModel, it) }
+                            )
+                            if (taskIndex < completedTasks.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier
+                                        .padding(top = 4.dp, start = 24.dp, end = 24.dp),
+                                    thickness = 2.dp,
+                                )
+                            }
+                        }
+                    }
+                }
             }
-        })
+        }
+    )
 }
 
 @Composable
-fun HomeViewTaskListItem(
+fun HomeAddNewTimedTaskCard(
+    modifier: Modifier = Modifier,
+    onNewTaskAdded: (String, Duration) -> Unit = { _, _ -> },
+    isEditingNewTaskInitial: Boolean = false,
+    initialDurationInMinutes: Float = 25f,
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.secondary,
+        ),
+        content = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                val isAddingNewTimedTask = remember { mutableStateOf(isEditingNewTaskInitial) }
+                if (isAddingNewTimedTask.value) {
+                    val newTaskName = remember { mutableStateOf("") }
+                    val newTaskDurationMinutes =
+                        remember { mutableFloatStateOf(initialDurationInMinutes) }
+                    val focusRequester = remember { FocusRequester() }
+                    val keyboardController = LocalSoftwareKeyboardController.current
+
+                    LaunchedEffect(Unit) {
+                        delay(100)
+                        focusRequester.requestFocus()
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Spacer(modifier = Modifier.width(30.dp))
+                        Icon(
+                            imageVector = Icons.Outlined.Timer,
+                            contentDescription = "Task Duration",
+                            modifier = Modifier.size(32.dp),
+                            tint = MaterialTheme.colorScheme.secondary,
+                        )
+                        Slider(
+                            value = newTaskDurationMinutes.floatValue,
+                            onValueChange = {
+                                newTaskDurationMinutes.floatValue = it
+                            },
+                            valueRange = 5f..60f,
+                            steps = 55,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 16.dp),
+                        )
+                        Spacer(modifier = Modifier.width(20.dp))
+                        Text(
+                            text = "${newTaskDurationMinutes.floatValue.fastRoundToInt()} minutes",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                        Spacer(modifier = Modifier.width(32.dp))
+                    }
+                    Row(
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        OutlinedTextField(
+                            value = newTaskName.value,
+                            onValueChange = { newTaskName.value = it },
+                            modifier = Modifier
+                                .padding(
+                                    start = 16.dp,
+                                    end = 8.dp,
+                                    bottom = 8.dp,
+                                )
+                                .focusRequester(focusRequester),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = MaterialTheme.colorScheme.secondary,
+                                focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                                disabledBorderColor = MaterialTheme.colorScheme.tertiary,
+                                errorBorderColor = MaterialTheme.colorScheme.error,
+                            ),
+                            keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Done,
+                                keyboardType = KeyboardType.Ascii
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    keyboardController?.hide()
+                                    focusRequester.freeFocus()
+                                    onNewTaskAdded(
+                                        newTaskName.value,
+                                        newTaskDurationMinutes.floatValue.fastRoundToInt().minutes
+                                    )
+                                    isAddingNewTimedTask.value = false
+                                }
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(
+                            onClick = {
+                                isAddingNewTimedTask.value = false
+                                newTaskName.value = ""
+                                newTaskDurationMinutes.floatValue = 25f
+                            },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Cancel,
+                                contentDescription = "Cancel Adding New Task",
+                                modifier = Modifier.size(32.dp),
+                                tint = MaterialTheme.colorScheme.secondary,
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "Do you want to dedicate some time to a task?",
+                        modifier = Modifier
+                            .padding(top = 8.dp, bottom = 4.dp)
+                            .fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedButton(
+                        onClick = { isAddingNewTimedTask.value = true },
+                        modifier = Modifier.padding(bottom = 16.dp),
+                    ) {
+                        Text(
+                            "Add New Timed Task",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+
+            }
+        }
+    )
+}
+
+
+@Composable
+fun HomeTimedTaskListCard(
+    timedTasks: List<TimedTaskUiModel>,
+    modifier: Modifier = Modifier,
+    onTimedTaskSelected: (TimedTaskUiModel) -> Unit = {},
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.secondary,
+        ),
+        content = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = "Your Timed Tasks",
+                    modifier = Modifier
+                        .padding(top = 8.dp, bottom = 4.dp)
+                        .fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                if (timedTasks.isEmpty()) {
+                    Text(
+                        text = "No timed tasks yet!",
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth()
+                            .heightIn(min = 100.dp, max = 400.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(timedTasks.size) {
+                            val timedTaskUiModel = timedTasks[it]
+                            HomeTimedTaskListItem(
+                                timedTaskUiModel = timedTaskUiModel,
+                                onTaskSelected = { onTimedTaskSelected(timedTaskUiModel) },
+                            )
+
+                            if (it < timedTasks.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier
+                                        .padding(top = 4.dp, start = 24.dp, end = 24.dp),
+                                    thickness = 2.dp,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun HomeTaskListItem(
     task: TaskUiModel,
     modifier: Modifier = Modifier,
     onTaskSelected: () -> Unit = {},
@@ -271,13 +584,18 @@ fun HomeViewTaskListItem(
             .clickable { onTaskSelected() },
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        val mainColor = if (task.isCompleted) {
+            MaterialTheme.colorScheme.tertiary
+        } else {
+            MaterialTheme.colorScheme.secondary
+        }
         Spacer(modifier = Modifier.width(12.dp))
         Checkbox(
             checked = task.isCompleted,
             onCheckedChange = { onTaskCompletionChanged(it) },
             modifier = Modifier.size(40.dp),
             colors = CheckboxDefaults.colors(
-                checkedColor = MaterialTheme.colorScheme.secondary,
+                checkedColor = mainColor,
             )
         )
         Spacer(modifier = Modifier.width(20.dp))
@@ -287,7 +605,12 @@ fun HomeViewTaskListItem(
                 .padding(top = 8.dp, bottom = 8.dp)
                 .weight(1f),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.secondary,
+            color = mainColor,
+            textDecoration = if (task.isCompleted) {
+                TextDecoration.LineThrough
+            } else {
+                TextDecoration.None
+            },
             maxLines = 1,
         )
         if (task.dueDate != null) {
@@ -295,14 +618,19 @@ fun HomeViewTaskListItem(
                 imageVector = Icons.Outlined.Alarm,
                 contentDescription = "Due Date",
                 modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.secondary,
+                tint = mainColor,
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = task.dueDate.toString(),
                 modifier = Modifier.padding(top = 8.dp, bottom = 8.dp, end = 16.dp),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.secondary,
+                textDecoration = if (task.isCompleted) {
+                    TextDecoration.LineThrough
+                } else {
+                    TextDecoration.None
+                },
+                color = mainColor,
                 maxLines = 1,
             )
         }
@@ -310,7 +638,116 @@ fun HomeViewTaskListItem(
 }
 
 @Composable
-fun HomeAddNewTaskButton(modifier: Modifier = Modifier, onNewTaskAdded: (String) -> Unit = {}) {
+fun HomeTimedTaskListItem(
+    timedTaskUiModel: TimedTaskUiModel,
+    modifier: Modifier = Modifier,
+    onTaskSelected: () -> Unit = {},
+) {
+    Row(
+        modifier = modifier
+            .clickable { onTaskSelected() },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Spacer(modifier = Modifier.width(12.dp))
+        if (timedTaskUiModel.isCompleted) {
+            Icon(
+                imageVector = Icons.Outlined.CheckCircleOutline,
+                contentDescription = "Task Completed",
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.tertiary,
+            )
+        } else if (timedTaskUiModel.hasNotStarted) {
+            Icon(
+                imageVector = Icons.Outlined.Timer,
+                contentDescription = "Task Not Started",
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.secondary,
+            )
+        } else {
+            CircularProgressIndicator(
+                progress = {
+                    val remainingMinutes =
+                        timedTaskUiModel.remainingDuration.inWholeMinutes
+                    val initialMinutes = timedTaskUiModel.initialDuration.inWholeMinutes
+                    ((remainingMinutes).toFloat() / initialMinutes.toFloat())
+                },
+                modifier = Modifier.size(24.dp),
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        val mainColor = if (timedTaskUiModel.isCompleted) {
+            MaterialTheme.colorScheme.tertiary
+        } else if (timedTaskUiModel.hasNotStarted) {
+            MaterialTheme.colorScheme.secondary
+        } else {
+            MaterialTheme.colorScheme.primary
+        }
+        if (timedTaskUiModel.isCompleted) {
+            Text(
+                text = "Done",
+                modifier = Modifier
+                    .padding(top = 8.dp, bottom = 8.dp)
+                    .weight(0.2f),
+                style = MaterialTheme.typography.titleMedium,
+                color = mainColor,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+        } else {
+            Text(
+                text = timedTaskUiModel.remainingDuration.toString(),
+                modifier = Modifier
+                    .padding(top = 8.dp, bottom = 8.dp)
+                    .weight(0.2f),
+                style = MaterialTheme.typography.titleMedium,
+                color = mainColor,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = timedTaskUiModel.name,
+            modifier = Modifier
+                .padding(top = 8.dp, bottom = 8.dp)
+                .weight(0.7f),
+            style = MaterialTheme.typography.titleMedium,
+            color = mainColor,
+            textDecoration = if (timedTaskUiModel.isCompleted) {
+                TextDecoration.LineThrough
+            } else {
+                TextDecoration.None
+            },
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        if (timedTaskUiModel.dueDate != null) {
+            Icon(
+                imageVector = Icons.Outlined.Alarm,
+                contentDescription = "Due Date",
+                modifier = Modifier.size(24.dp),
+                tint = mainColor,
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = timedTaskUiModel.dueDate.toString(),
+                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp, end = 16.dp),
+                style = MaterialTheme.typography.labelLarge,
+                color = mainColor,
+                maxLines = 1,
+            )
+        }
+
+    }
+
+}
+
+@Composable
+fun HomeAddNewTaskButton(
+    modifier: Modifier = Modifier,
+    onNewTaskAdded: (String) -> Unit = {}
+) {
     Row(
         modifier = modifier
             .clip(MaterialTheme.shapes.small),
@@ -374,7 +811,7 @@ fun HomeTopAppBar(
     TopAppBar(
         title = {
             Text(
-                "PoMoDoGoGetter",
+                "PoMoDoGetter",
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center,
@@ -387,14 +824,15 @@ fun HomeTopAppBar(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
         ),
         navigationIcon = {
-            Image(
-                painter = painterResource(id = R.drawable.app_icon),
-                contentDescription = "Menu",
-                modifier = Modifier
-                    .size(32.dp)
-                    .padding(start = 4.dp)
-                    .clip(MaterialTheme.shapes.small)
-            )
+            Box (modifier = Modifier.padding(start = 8.dp).clip(MaterialTheme.shapes.small)
+                .border(1.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.small)){
+                Image(
+                    painter = painterResource(id = R.drawable.app_icon),
+                    contentDescription = "Menu",
+                    modifier = Modifier
+                        .size(42.dp)
+                )
+            }
         },
         actions = {
             IconButton(onClick = { onSettingsSelected() }) {
@@ -413,65 +851,112 @@ fun HomeTopAppBar(
 fun HomeFloatingActionButton(
     modifier: Modifier = Modifier,
     onNewTaskAdded: (String) -> Unit = {},
+    onNewTimedTaskAdded: (String, Duration) -> Unit = { _, _ -> },
     isEditingNewTaskInitial: Boolean = false,
 ) {
     val isEditingNewTask = remember { mutableStateOf(isEditingNewTaskInitial) }
+    val durationInMinutes = remember { mutableFloatStateOf(25f) }
+    val isTimedTask = remember { mutableStateOf(false) }
+
     if (isEditingNewTask.value) {
-        Row(
+        Column(
             modifier = modifier
-                .padding(start = 30.dp, bottom = 16.dp)
+                .padding(start = 32.dp, bottom = 16.dp)
                 .clip(MaterialTheme.shapes.large)
+                .border(1.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.large)
                 .background(MaterialTheme.colorScheme.primaryContainer),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
         ) {
-            val newTaskName = remember { mutableStateOf("") }
-            val focusRequester = remember { FocusRequester() }
-            val keyboardController = LocalSoftwareKeyboardController.current
-
-            LaunchedEffect(Unit) {
-                delay(50)
-                focusRequester.requestFocus()
-            }
-
-            OutlinedTextField(
-                value = newTaskName.value,
-                onValueChange = { newTaskName.value = it },
+            Row(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .focusRequester(focusRequester),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    disabledBorderColor = MaterialTheme.colorScheme.tertiary,
-                    errorBorderColor = MaterialTheme.colorScheme.error,
-                ),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done,
-                    keyboardType = KeyboardType.Ascii
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        keyboardController?.hide()
-                        focusRequester.freeFocus()
-                        onNewTaskAdded(newTaskName.value)
-                        isEditingNewTask.value = false
-                    }
-                )
-            )
-            IconButton(
-                onClick = {
-                    isEditingNewTask.value = false
-                    newTaskName.value = ""
-                },
-                modifier = Modifier.padding(end = 8.dp),
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Cancel,
-                    contentDescription = "Cancel Adding New Task",
+                    imageVector = Icons.Outlined.Timer,
+                    contentDescription = "Timed Task",
                     modifier = Modifier.size(36.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
+                Checkbox(checked = isTimedTask.value, onCheckedChange = {
+                    isTimedTask.value = it
+                })
+                if (isTimedTask.value) {
+                    Slider(
+                        value = durationInMinutes.floatValue,
+                        onValueChange = {
+                            durationInMinutes.floatValue = it
+                        },
+                        valueRange = 5f..60f,
+                        steps = 55,
+                        modifier = Modifier
+                            .weight(1f),
+                    )
+                    Text(
+                        text = "${durationInMinutes.floatValue.fastRoundToInt()} minutes",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                val newTaskName = remember { mutableStateOf("") }
+                val focusRequester = remember { FocusRequester() }
+                val keyboardController = LocalSoftwareKeyboardController.current
+
+                LaunchedEffect(Unit) {
+                    delay(50)
+                    focusRequester.requestFocus()
+                }
+
+                OutlinedTextField(
+                    value = newTaskName.value,
+                    onValueChange = { newTaskName.value = it },
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .focusRequester(focusRequester),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        disabledBorderColor = MaterialTheme.colorScheme.tertiary,
+                        errorBorderColor = MaterialTheme.colorScheme.error,
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done,
+                        keyboardType = KeyboardType.Ascii
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            keyboardController?.hide()
+                            focusRequester.freeFocus()
+                            if (isTimedTask.value) {
+                                onNewTimedTaskAdded(newTaskName.value, durationInMinutes.floatValue.fastRoundToInt().minutes)
+                            } else {
+                                onNewTaskAdded(newTaskName.value)
+                            }
+                            isEditingNewTask.value = false
+                        }
+                    )
+                )
+                IconButton(
+                    onClick = {
+                        isEditingNewTask.value = false
+                        newTaskName.value = ""
+                    },
+                    modifier = Modifier.padding(end = 8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Cancel,
+                        contentDescription = "Cancel Adding New Task",
+                        modifier = Modifier.size(36.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
         }
     } else {
@@ -479,6 +964,7 @@ fun HomeFloatingActionButton(
             onClick = { isEditingNewTask.value = true },
             modifier = modifier
                 .size(56.dp)
+                .border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.large)
                 .clip(MaterialTheme.shapes.large),
             contentColor = MaterialTheme.colorScheme.primary,
         ) {
@@ -492,7 +978,10 @@ fun HomeFloatingActionButton(
 }
 
 @Composable
-fun HomePomodoroTimerCard(modifier: Modifier = Modifier, onStartPomodoroSelected: () -> Unit = {}) {
+fun HomePomodoroTimerCard(
+    modifier: Modifier = Modifier,
+    onStartPomodoroSelected: () -> Unit = {}
+) {
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors().copy(
@@ -553,6 +1042,26 @@ private fun HomeViewPreview() {
                     name = "Task 3",
                     isCompleted = false
                 ),
+            ),
+            timedTasks = listOf(
+                TimedTaskUiModel(
+                    id = 1,
+                    name = "Task 1",
+                    initialDuration = 40.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                ),
+                TimedTaskUiModel(
+                    id = 2,
+                    name = "Task 2",
+                    initialDuration = 25.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                ),
+                TimedTaskUiModel(
+                    id = 3,
+                    name = "Task 3",
+                    initialDuration = 30.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                ),
             )
         )
     }
@@ -578,6 +1087,26 @@ private fun HomeViewContentsPreview() {
                     id = 3,
                     name = "Task 3",
                     isCompleted = false
+                ),
+            ),
+            timedTasks = listOf(
+                TimedTaskUiModel(
+                    id = 1,
+                    name = "Task 1",
+                    initialDuration = 40.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                ),
+                TimedTaskUiModel(
+                    id = 2,
+                    name = "Task 2",
+                    initialDuration = 25.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                ),
+                TimedTaskUiModel(
+                    id = 3,
+                    name = "Task 3",
+                    initialDuration = 30.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
                 ),
             )
         )
@@ -609,7 +1138,8 @@ private fun HomeViewTaskListCardPreview() {
                 TaskUiModel(
                     id = 1,
                     name = "Task 1",
-                    isCompleted = false
+                    isCompleted = false,
+                    dueDate = LocalDate.now().plusDays(1)
                 ),
                 TaskUiModel(
                     id = 2,
@@ -631,14 +1161,14 @@ private fun HomeViewTaskListCardPreview() {
 private fun HomeViewTaskListItemPreview() {
     AppTheme {
         Column {
-            HomeViewTaskListItem(
+            HomeTaskListItem(
                 task = TaskUiModel(
                     id = 1,
                     name = "Task 1",
                     isCompleted = false
                 )
             )
-            HomeViewTaskListItem(
+            HomeTaskListItem(
                 task = TaskUiModel(
                     id = 2,
                     name = "Task 2",
@@ -655,14 +1185,14 @@ private fun HomeViewTaskListItemPreview() {
 private fun HomeViewTaskListItemDarkPreview() {
     AppTheme(darkTheme = true) {
         Column {
-            HomeViewTaskListItem(
+            HomeTaskListItem(
                 task = TaskUiModel(
                     id = 1,
                     name = "Task 1",
                     isCompleted = false
                 )
             )
-            HomeViewTaskListItem(
+            HomeTaskListItem(
                 task = TaskUiModel(
                     id = 2,
                     name = "Task 2",
@@ -673,6 +1203,125 @@ private fun HomeViewTaskListItemDarkPreview() {
         }
     }
 }
+
+@Preview
+@Composable
+private fun HomeAddNewTimedTaskCardPreview() {
+    AppTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            HomeAddNewTimedTaskCard()
+            HomeAddNewTimedTaskCard(isEditingNewTaskInitial = true)
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun HomeTimedTaskListCardPreview() {
+    AppTheme {
+        HomeTimedTaskListCard(
+            timedTasks = listOf(
+                TimedTaskUiModel(
+                    id = 1,
+                    name = "Task 1",
+                    initialDuration = 40.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                ),
+                TimedTaskUiModel(
+                    id = 2,
+                    name = "Task 2",
+                    initialDuration = 25.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                ),
+                TimedTaskUiModel(
+                    id = 3,
+                    name = "Task 3",
+                    initialDuration = 30.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                ),
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HomeTimedTaskListItemPreview() {
+    AppTheme {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            HomeTimedTaskListItem(
+                timedTaskUiModel = TimedTaskUiModel(
+                    id = 1,
+                    name = "Task 1",
+                    initialDuration = 40.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                )
+            )
+            HomeTimedTaskListItem(
+                timedTaskUiModel = TimedTaskUiModel(
+                    id = 2,
+                    name = "Task 2",
+                    initialDuration = 25.minutes,
+                    remainingDuration = 6.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                )
+            )
+            HomeTimedTaskListItem(
+                timedTaskUiModel = TimedTaskUiModel(
+                    id = 2,
+                    name = "Task 2",
+                    initialDuration = 25.minutes,
+                    remainingDuration = ZERO,
+                )
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun HomeTimedTaskListItemDarkPreview() {
+    AppTheme(
+        darkTheme = true
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            HomeTimedTaskListItem(
+                timedTaskUiModel = TimedTaskUiModel(
+                    id = 1,
+                    name = "Task 1",
+                    initialDuration = 40.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                )
+            )
+            HomeTimedTaskListItem(
+                timedTaskUiModel = TimedTaskUiModel(
+                    id = 2,
+                    name = "Task 2",
+                    initialDuration = 25.minutes,
+                    remainingDuration = 6.minutes,
+                    dueDate = LocalDate.now().plusDays(1)
+                )
+            )
+            HomeTimedTaskListItem(
+                timedTaskUiModel = TimedTaskUiModel(
+                    id = 2,
+                    name = "Task 2",
+                    initialDuration = 25.minutes,
+                    remainingDuration = ZERO,
+                )
+            )
+        }
+    }
+}
+
 
 @Preview
 @Composable

@@ -1,5 +1,7 @@
 package work.wander.pomodogetter.ui.pomodoro
 
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -12,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,25 +64,40 @@ fun PomodoroTimerView(
     onTimerCancel: () -> Unit = {},
     onTimerDurationChange: (Duration) -> Unit = {},
 ) {
+    val backPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val backPressedCallback = remember {
+        object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                onTimerCancel()
+
+                isEnabled = false
+                backPressedDispatcher?.onBackPressed()
+            }
+        }
+    }
+
+    DisposableEffect(backPressedDispatcher) {
+        backPressedDispatcher?.addCallback(backPressedCallback)
+        onDispose {
+            backPressedCallback.remove()
+        }
+    }
+
     Scaffold(
         modifier = modifier,
-        content = {
+        content = { paddingValues ->
             Box(
                 modifier = Modifier
-                    .padding(it)
+                    .padding(paddingValues)
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-
-
                 when (uiState) {
                     is PomodoroTimerUiState.Initial -> {
                         InitialTimerView(
                             modifier = Modifier
-                                .fillMaxSize()
+                                .fillMaxSize(),
                         )
-                        // TODO there has to be a better way to do this
-                        onTimerReady()
                     }
 
                     is PomodoroTimerUiState.Running -> {
@@ -109,8 +128,8 @@ fun PomodoroTimerView(
                         uiState,
                         Modifier.fillMaxSize(),
                         onTimerStart,
-                        onDurationChange = {
-                            onTimerDurationChange(it)
+                        onDurationChange = { duration ->
+                            onTimerDurationChange(duration)
                         })
                 }
             }
@@ -165,14 +184,49 @@ fun ReadyTimerView(
 
         val duration = uiState.initialDuration
 
-        TimerDurationSelector(
-            initialDuration = duration,
-            onDurationChange = onDurationChange,
-            onTimerStart = onTimerStart,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(200.dp)
-        )
+        if (uiState.boundTask != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    TimerDisplay(
+                        millisRemaining = uiState.boundTask.taskDuration.inWholeMilliseconds,
+                        // TODO change to a style parameter instead
+                        isRunning = true,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .clickable { onTimerStart() },
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = "Task: ${uiState.boundTask.taskName}",
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            }
+        } else {
+            TimerDurationSelector(
+                initialDuration = duration,
+                onDurationChange = onDurationChange,
+                onTimerStart = onTimerStart,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(200.dp)
+            )
+        }
     }
 }
 
@@ -197,6 +251,22 @@ fun CompletedTimerView(
             Spacer(modifier = Modifier.size(16.dp))
             Button(onClick = onTimerReady) {
                 Text(text = "Ready")
+            }
+            if (uiState.boundTask != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                ) {
+                    Text(
+                        text = "Task: ${uiState.boundTask.taskName}",
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
 
         }
@@ -232,19 +302,52 @@ fun PausedTimerView(
                     .padding(8.dp),
             )
         }
-        TimerDisplay(
-            millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
-            modifier = Modifier
-                .clickable { onTimerResume() }
+        Column(
+            modifier = Modifier.fillMaxWidth()
                 .align(Alignment.Center),
-            isRunning = false,
-        )
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (uiState.boundTask != null) {
+                Text(
+                    text = "Paused: ${uiState.boundTask.taskName}",
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            TimerDisplay(
+                millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
+                modifier = Modifier
+                    .clickable { onTimerResume() },
+                isRunning = true,
+            )
+        }
         TimerProgressIndicator(
             millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
             millisTotal = uiState.totalDuration.inWholeMilliseconds,
             modifier = Modifier.size(320.dp),
             isRunning = false,
         )
+        if (uiState.boundTask != null) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
+            ) {
+                Text(
+                    text = "Task: ${uiState.boundTask.taskName}",
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
     }
 }
 
@@ -277,13 +380,28 @@ fun RunningTimerView(
                     .padding(8.dp),
             )
         }
-        TimerDisplay(
-            millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
-            modifier = Modifier
-                .clickable { timerPaused() }
-                .align(Alignment.Center),
-            isRunning = true,
-        )
+        Column(
+            modifier = Modifier.fillMaxWidth().align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (uiState.boundTask != null) {
+                Text(
+                    text = "Completing: ${uiState.boundTask.taskName}",
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            TimerDisplay(
+                millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
+                modifier = Modifier
+                    .clickable { timerPaused() },
+                isRunning = true,
+            )
+        }
         TimerProgressIndicator(
             millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
             millisTotal = uiState.totalDuration.inWholeMilliseconds,
@@ -292,6 +410,7 @@ fun RunningTimerView(
                 .align(Alignment.Center),
             isRunning = true,
         )
+
 
     }
 }
