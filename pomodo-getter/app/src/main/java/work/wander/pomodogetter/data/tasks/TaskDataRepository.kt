@@ -62,6 +62,10 @@ interface TaskDataRepository {
 
 }
 
+/**
+ * Default implementation of [TaskDataRepository].
+
+ */
 class DefaultTaskDataRepository @Inject constructor(
     private val taskDatabase: TaskDatabase,
     private val appLogger: AppLogger,

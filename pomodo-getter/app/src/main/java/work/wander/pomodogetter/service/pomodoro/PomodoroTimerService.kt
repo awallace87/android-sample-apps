@@ -28,6 +28,9 @@ import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
+/**
+ * Service to manage the Pomodoro timer.
+ */
 @AndroidEntryPoint
 class PomodoroTimerService : LifecycleService() {
 
@@ -210,7 +213,6 @@ class PomodoroTimerService : LifecycleService() {
     }
 
     companion object {
-        // TODO hide values as internal or private as needed
         const val NOTIFICATION_ID = 1
 
         const val ACTION_RESET = "work.wander.pomodogetter.service.pomodoro.RESET"
@@ -229,6 +231,9 @@ class PomodoroTimerService : LifecycleService() {
 
     }
 
+    /**
+     * Launcher class to start, pause, resume, stop the timer service
+     */
     class Launcher(
         private val context: Context
     ) {

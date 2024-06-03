@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import work.wander.pomodogetter.data.tasks.TaskDataRepository
 import work.wander.pomodogetter.data.tasks.entity.TimedTaskDataEntity
 import work.wander.pomodogetter.framework.annotation.BackgroundThread
@@ -26,31 +28,71 @@ import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-sealed class PomodoroTimerUiState {
-    object Initial : PomodoroTimerUiState()
+/**
+ * Sealed class representing the different states of the Pomodoro timer.
+ */
+sealed interface PomodoroTimerUiState {
+    /**
+     * Represents the initial state of the Pomodoro timer.
+     */
+    object Initial : PomodoroTimerUiState
+
+    /**
+     * Represents the ready state of the Pomodoro timer.
+     *
+     * @property boundTask The task bound to the timer, or null if no task is bound.
+     * @property initialDuration The initial duration of the timer.
+     */
     data class Ready(
         val boundTask: PomodoroBoundTask? = null,
         val initialDuration: Duration,
-    ) : PomodoroTimerUiState()
+    ) : PomodoroTimerUiState
 
+    /**
+     * Represents the running state of the Pomodoro timer.
+     *
+     * @property boundTask The task bound to the timer, or null if no task is bound.
+     * @property remainingDuration The remaining duration of the timer.
+     * @property totalDuration The total duration of the timer.
+     */
     data class Running(
         val boundTask: PomodoroBoundTask? = null,
         val remainingDuration: Duration,
         val totalDuration: Duration,
-    ) : PomodoroTimerUiState()
+    ) : PomodoroTimerUiState
 
+    /**
+     * Represents the paused state of the Pomodoro timer.
+     *
+     * @property boundTask The task bound to the timer, or null if no task is bound.
+     * @property remainingDuration The remaining duration of the timer.
+     * @property totalDuration The total duration of the timer.
+     */
     data class Paused(
         val boundTask: PomodoroBoundTask? = null,
         val remainingDuration: Duration,
         val totalDuration: Duration,
-    ) : PomodoroTimerUiState()
+    ) : PomodoroTimerUiState
 
+    /**
+     * Represents the completed state of the Pomodoro timer.
+     *
+     * @property boundTask The task bound to the timer, or null if no task is bound.
+     * @property totalDuration The total duration of the timer.
+     */
     data class Completed(
         val boundTask: PomodoroBoundTask? = null,
         val totalDuration: Duration,
-    ) : PomodoroTimerUiState()
+    ) : PomodoroTimerUiState
 }
 
+/**
+ * Data class representing a task bound to the Pomodoro timer.
+ *
+ * @property taskId The ID of the task.
+ * @property taskName The name of the task.
+ * @property taskDuration The duration of the task.
+ */
 data class PomodoroBoundTask(
     val taskId: Long,
     val taskName: String,
@@ -175,7 +217,9 @@ class PomodoroTimerViewModel @Inject constructor(
                 if (task.isCompleted) {
                     logger.warn("Task is already completed, setting to default timer duration")
                     pomodoroServiceLauncher.resetTimer(defaultTimerDuration)
-                    toaster.showToast("Task is already completed. Resetting to default timer duration")
+                    withContext(Dispatchers.Main) {
+                        toaster.showToast("Task is already completed. Resetting to default timer duration")
+                    }
                 } else {
                     boundTask = PomodoroBoundTask(taskId, task.name, task.durationRemaining)
                     pomodoroServiceLauncher.resetTimer(task.durationRemaining)

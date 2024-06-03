@@ -80,6 +80,14 @@ class HomeViewModel @Inject constructor(
     }
 }
 
+/**
+ * Data class representing a task in the UI.
+ *
+ * @property id The unique ID of the task.
+ * @property name The name of the task.
+ * @property isCompleted Whether the task is completed.
+ * @property dueDate The due date of the task, or null if the task does not have a due date.
+ */
 data class TaskUiModel(
     val id: Long,
     val name: String,
@@ -87,6 +95,15 @@ data class TaskUiModel(
     val dueDate: LocalDate? = null,
 )
 
+/**
+ * Data class representing a timed task in the UI.
+ *
+ * @property id The unique ID of the task.
+ * @property name The name of the task.
+ * @property initialDuration The initial duration of the task.
+ * @property remainingDuration The remaining duration of the task. Defaults to the initial duration.
+ * @property dueDate The due date of the task, or null if the task does not have a due date.
+ */
 data class TimedTaskUiModel(
     val id: Long,
     val name: String,
@@ -94,9 +111,17 @@ data class TimedTaskUiModel(
     val remainingDuration: Duration = initialDuration,
     val dueDate: LocalDate? = null,
 ) {
+    /**
+     * Checks if the task is completed.
+     * A task is considered completed if the remaining duration is zero or less.
+     */
     val isCompleted: Boolean
         get() = Duration.ZERO >= remainingDuration
 
+    /**
+     * Checks if the task has not started.
+     * A task is considered not started if the initial duration equals the remaining duration.
+     */
     val hasNotStarted: Boolean
         get() = initialDuration == remainingDuration
 }

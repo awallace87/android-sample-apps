@@ -123,9 +123,7 @@ fun MainNavigation() {
 
             // Only call setTimedTaskId if it hasn't been called yet for this taskId
             if (!timedTaskIdSet.value) {
-                if (pomodoroTimerDetails.hasTaskId) {
-                    pomodoroTimerViewModel.setTimedTaskId(pomodoroTimerDetails.boundTimedTaskId)
-                }
+                pomodoroTimerViewModel.setTimedTaskId(pomodoroTimerDetails.boundTimedTaskId)
                 timedTaskIdSet.value = true
             }
 

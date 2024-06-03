@@ -3,6 +3,7 @@ package work.wander.pomodogetter.ui.home
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.Top
@@ -56,6 +57,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -273,25 +275,38 @@ fun HomeViewTaskListCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 val incompleteTasks = tasks.filter { !it.isCompleted }
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth()
-                        .heightIn(min = 200.dp, max = 400.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(incompleteTasks.size) { taskIndex ->
-                        val taskModel = incompleteTasks[taskIndex]
-                        HomeTaskListItem(
-                            task = taskModel,
-                            onTaskSelected = { onTaskSelected(taskModel) },
-                            onTaskCompletionChanged = { onTaskCompletionChanged(taskModel, it) }
-                        )
-                        if (taskIndex < incompleteTasks.size - 1) {
-                            HorizontalDivider(
-                                modifier = Modifier
-                                    .padding(top = 4.dp, start = 24.dp, end = 24.dp),
-                                thickness = 2.dp,
+                if (incompleteTasks.isEmpty()) {
+                    Text(
+                        text = "No tasks yet!",
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 100.dp, max = 400.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(incompleteTasks.size) { taskIndex ->
+                            val taskModel = incompleteTasks[taskIndex]
+                            HomeTaskListItem(
+                                task = taskModel,
+                                onTaskSelected = { onTaskSelected(taskModel) },
+                                onTaskCompletionChanged = { onTaskCompletionChanged(taskModel, it) }
                             )
+                            if (taskIndex < incompleteTasks.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier
+                                        .padding(top = 4.dp, start = 24.dp, end = 24.dp),
+                                    thickness = 2.dp,
+                                )
+                            }
                         }
                     }
                 }
@@ -306,25 +321,38 @@ fun HomeViewTaskListCard(
                         .fillMaxWidth(),
                 )
                 val completedTasks = tasks.filter { it.isCompleted }
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth()
-                        .heightIn(min = 200.dp, max = 400.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(completedTasks.size) { taskIndex ->
-                        val taskModel = completedTasks[taskIndex]
-                        HomeTaskListItem(
-                            task = taskModel,
-                            onTaskSelected = { onTaskSelected(taskModel) },
-                            onTaskCompletionChanged = { onTaskCompletionChanged(taskModel, it) }
-                        )
-                        if (taskIndex < completedTasks.size - 1) {
-                            HorizontalDivider(
-                                modifier = Modifier
-                                    .padding(top = 4.dp, start = 24.dp, end = 24.dp),
-                                thickness = 2.dp,
+                if (completedTasks.isEmpty()) {
+                    Text(
+                        text = "No completed tasks yet!",
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 100.dp, max = 400.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(completedTasks.size) { taskIndex ->
+                            val taskModel = completedTasks[taskIndex]
+                            HomeTaskListItem(
+                                task = taskModel,
+                                onTaskSelected = { onTaskSelected(taskModel) },
+                                onTaskCompletionChanged = { onTaskCompletionChanged(taskModel, it) }
                             )
+                            if (taskIndex < completedTasks.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier
+                                        .padding(top = 4.dp, start = 24.dp, end = 24.dp),
+                                    thickness = 2.dp,
+                                )
+                            }
                         }
                     }
                 }
@@ -504,24 +532,37 @@ fun HomeTimedTaskListCard(
                     textAlign = TextAlign.Center,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(timedTasks.size) {
-                        val timedTaskUiModel = timedTasks[it]
-                        HomeTimedTaskListItem(
-                            timedTaskUiModel = timedTaskUiModel,
-                            onTaskSelected = { onTimedTaskSelected(timedTaskUiModel) },
-                        )
-
-                        if (it < timedTasks.size - 1) {
-                            HorizontalDivider(
-                                modifier = Modifier
-                                    .padding(top = 4.dp, start = 24.dp, end = 24.dp),
-                                thickness = 2.dp,
+                if (timedTasks.isEmpty()) {
+                    Text(
+                        text = "No timed tasks yet!",
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth()
+                            .heightIn(min = 100.dp, max = 400.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(timedTasks.size) {
+                            val timedTaskUiModel = timedTasks[it]
+                            HomeTimedTaskListItem(
+                                timedTaskUiModel = timedTaskUiModel,
+                                onTaskSelected = { onTimedTaskSelected(timedTaskUiModel) },
                             )
+
+                            if (it < timedTasks.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier
+                                        .padding(top = 4.dp, start = 24.dp, end = 24.dp),
+                                    thickness = 2.dp,
+                                )
+                            }
                         }
                     }
                 }
@@ -783,14 +824,15 @@ fun HomeTopAppBar(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
         ),
         navigationIcon = {
-            Image(
-                painter = painterResource(id = R.drawable.app_icon),
-                contentDescription = "Menu",
-                modifier = Modifier
-                    .size(32.dp)
-                    .padding(start = 4.dp)
-                    .clip(MaterialTheme.shapes.small)
-            )
+            Box (modifier = Modifier.padding(start = 8.dp).clip(MaterialTheme.shapes.small)
+                .border(1.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.small)){
+                Image(
+                    painter = painterResource(id = R.drawable.app_icon),
+                    contentDescription = "Menu",
+                    modifier = Modifier
+                        .size(42.dp)
+                )
+            }
         },
         actions = {
             IconButton(onClick = { onSettingsSelected() }) {
@@ -819,7 +861,9 @@ fun HomeFloatingActionButton(
     if (isEditingNewTask.value) {
         Column(
             modifier = modifier
+                .padding(start = 32.dp, bottom = 16.dp)
                 .clip(MaterialTheme.shapes.large)
+                .border(1.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.large)
                 .background(MaterialTheme.colorScheme.primaryContainer),
         ) {
             Row(
@@ -920,6 +964,7 @@ fun HomeFloatingActionButton(
             onClick = { isEditingNewTask.value = true },
             modifier = modifier
                 .size(56.dp)
+                .border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.large)
                 .clip(MaterialTheme.shapes.large),
             contentColor = MaterialTheme.colorScheme.primary,
         ) {

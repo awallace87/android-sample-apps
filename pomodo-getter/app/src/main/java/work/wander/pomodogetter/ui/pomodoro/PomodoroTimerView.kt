@@ -96,7 +96,7 @@ fun PomodoroTimerView(
                     is PomodoroTimerUiState.Initial -> {
                         InitialTimerView(
                             modifier = Modifier
-                                .fillMaxSize()
+                                .fillMaxSize(),
                         )
                     }
 
@@ -302,13 +302,29 @@ fun PausedTimerView(
                     .padding(8.dp),
             )
         }
-        TimerDisplay(
-            millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
-            modifier = Modifier
-                .clickable { onTimerResume() }
+        Column(
+            modifier = Modifier.fillMaxWidth()
                 .align(Alignment.Center),
-            isRunning = false,
-        )
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (uiState.boundTask != null) {
+                Text(
+                    text = "Paused: ${uiState.boundTask.taskName}",
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            TimerDisplay(
+                millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
+                modifier = Modifier
+                    .clickable { onTimerResume() },
+                isRunning = true,
+            )
+        }
         TimerProgressIndicator(
             millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
             millisTotal = uiState.totalDuration.inWholeMilliseconds,
@@ -364,29 +380,13 @@ fun RunningTimerView(
                     .padding(8.dp),
             )
         }
-        TimerDisplay(
-            millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
-            modifier = Modifier
-                .clickable { timerPaused() }
-                .align(Alignment.Center),
-            isRunning = true,
-        )
-        TimerProgressIndicator(
-            millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
-            millisTotal = uiState.totalDuration.inWholeMilliseconds,
-            modifier = Modifier
-                .size(320.dp)
-                .align(Alignment.Center),
-            isRunning = true,
-        )
-        if (uiState.boundTask != null) {
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
-            ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (uiState.boundTask != null) {
                 Text(
-                    text = "Task: ${uiState.boundTask.taskName}",
+                    text = "Completing: ${uiState.boundTask.taskName}",
                     modifier = Modifier
                         .padding(8.dp)
                         .fillMaxWidth(),
@@ -395,7 +395,22 @@ fun RunningTimerView(
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
+            TimerDisplay(
+                millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
+                modifier = Modifier
+                    .clickable { timerPaused() },
+                isRunning = true,
+            )
         }
+        TimerProgressIndicator(
+            millisRemaining = uiState.remainingDuration.inWholeMilliseconds,
+            millisTotal = uiState.totalDuration.inWholeMilliseconds,
+            modifier = Modifier
+                .size(320.dp)
+                .align(Alignment.Center),
+            isRunning = true,
+        )
+
 
     }
 }
