@@ -327,5 +327,462 @@ class PomodoroTimerViewModelTest {
         coVerify(exactly = 0) { pomodoroServiceLauncher.pauseTimer() }
     }
 
+    @Test
+    fun `pauseTimer calls pauseTimer when UI state is running`() = runTest {
+        timerStateFlow.update {
+            TimerManager.TimerState.Running(
+                startedAt = Instant.now(),
+                totalDuration = 30.minutes,
+                remainingDuration = 29.minutes,
+                millisPerTick = 1000,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Running(
+                remainingDuration = 29.minutes,
+                totalDuration = 30.minutes
+            )
+        )
+
+        viewModel.pauseTimer()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.pauseTimer() }
+    }
+
+    @Test
+    fun `pauseTimer updates bound task when paused`() = runTest {
+        val createdAt = Instant.now()
+        coEvery { taskDataRepository.getTimedTaskById(1) } returns TimedTaskDataEntity(
+            1,
+            "Task 1",
+            null,
+            15.minutes,
+            createdAt = createdAt
+        )
+        coEvery { taskDataRepository.updateTimedTask(any()) } returns true
+
+        viewModel.setTimedTaskId(1)
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.resetTimer(15.minutes) }
+
+        timerStateFlow.update { TimerManager.TimerState.Ready(15.minutes, 1000) }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Ready(
+                PomodoroBoundTask(
+                    1,
+                    "Task 1",
+                    15.minutes
+                ), 15.minutes
+            )
+        )
+
+        viewModel.startTimer()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.startTimer() }
+
+        timerStateFlow.update {
+            TimerManager.TimerState.Running(
+                startedAt = Instant.now(),
+                totalDuration = 15.minutes,
+                remainingDuration = 15.minutes - 1.seconds,
+                millisPerTick = 1000,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            taskDataRepository.updateTimedTask(
+                TimedTaskDataEntity(
+                    1,
+                    "Task 1",
+                    initialDuration = 15.minutes,
+                    durationRemaining = 15.minutes - 1.seconds,
+                    createdAt = createdAt,
+                )
+            )
+        }
+
+        viewModel.pauseTimer()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.pauseTimer() }
+
+        timerStateFlow.update {
+            TimerManager.TimerState.Paused(
+                startedAt = Instant.now(),
+                remainingDuration = 15.minutes - 1.seconds,
+                totalDuration = 15.minutes,
+                millisPerTick = 1000,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 2) {
+            taskDataRepository.updateTimedTask(
+                TimedTaskDataEntity(
+                    1,
+                    "Task 1",
+                    initialDuration = 15.minutes,
+                    durationRemaining = 15.minutes - 1.seconds,
+                    createdAt = createdAt,
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `resumeTimer does not call resumeTimer when UI state is not paused`() = runTest {
+        timerStateFlow.update { TimerManager.TimerState.Ready(30.minutes, 1000) }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Ready(
+                initialDuration = 30.minutes
+            )
+        )
+        coVerify(exactly = 0) { pomodoroServiceLauncher.resumeTimer() }
+
+        viewModel.resumeTimer()
+
+        coVerify(exactly = 0) { pomodoroServiceLauncher.resumeTimer() }
+
+        val startedAt = Instant.now().minusMillis(30.minutes.inWholeMilliseconds)
+        timerStateFlow.update {
+            TimerManager.TimerState.Running(
+                startedAt = startedAt,
+                remainingDuration = 29.minutes,
+                totalDuration = 30.minutes,
+                millisPerTick = 1000,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Running(
+                remainingDuration = 29.minutes,
+                totalDuration = 30.minutes
+            )
+        )
+        coVerify(exactly = 0) { pomodoroServiceLauncher.resumeTimer() }
+
+        viewModel.resumeTimer()
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 0) { pomodoroServiceLauncher.resumeTimer() }
+    }
+
+    @Test
+    fun `resumeTimer calls resumeTimer when UI state is paused`() = runTest {
+        timerStateFlow.update {
+            TimerManager.TimerState.Paused(
+                startedAt = Instant.now(),
+                remainingDuration = 29.minutes,
+                totalDuration = 30.minutes,
+                millisPerTick = 1000,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Paused(
+                remainingDuration = 29.minutes,
+                totalDuration = 30.minutes
+            )
+        )
+
+        viewModel.resumeTimer()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.resumeTimer() }
+    }
+
+    @Test
+    fun `resumeTimer updates bound task when resumed`() = runTest {
+        val createdAt = Instant.now()
+        coEvery { taskDataRepository.getTimedTaskById(1) } returns TimedTaskDataEntity(
+            1,
+            "Task 1",
+            null,
+            15.minutes,
+            createdAt = createdAt
+        )
+        coEvery { taskDataRepository.updateTimedTask(any()) } returns true
+
+        viewModel.setTimedTaskId(1)
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.resetTimer(15.minutes) }
+
+        timerStateFlow.update { TimerManager.TimerState.Ready(15.minutes, 1000) }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Ready(
+                PomodoroBoundTask(
+                    1,
+                    "Task 1",
+                    15.minutes
+                ), 15.minutes
+            )
+        )
+
+        viewModel.startTimer()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.startTimer() }
+
+        timerStateFlow.update {
+            TimerManager.TimerState.Running(
+                startedAt = Instant.now(),
+                totalDuration = 15.minutes,
+                remainingDuration = 15.minutes - 1.seconds,
+                millisPerTick = 1000,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            taskDataRepository.updateTimedTask(
+                TimedTaskDataEntity(
+                    1,
+                    "Task 1",
+                    initialDuration = 15.minutes,
+                    durationRemaining = 15.minutes - 1.seconds,
+                    createdAt = createdAt,
+                )
+            )
+        }
+
+        viewModel.pauseTimer()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.pauseTimer() }
+
+        timerStateFlow.update {
+            TimerManager.TimerState.Paused(
+                startedAt = Instant.now(),
+                remainingDuration = 15.minutes - 1.seconds,
+                totalDuration = 15.minutes,
+                millisPerTick = 1000,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 2) {
+            taskDataRepository.updateTimedTask(
+                TimedTaskDataEntity(
+                    1,
+                    "Task 1",
+                    initialDuration = 15.minutes,
+                    durationRemaining = 15.minutes - 1.seconds,
+                    createdAt = createdAt,
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `cancelTimer does not call stopTimer when UI state is not running or paused`() = runTest {
+        timerStateFlow.update { TimerManager.TimerState.Ready(30.minutes, 1000) }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Ready(
+                initialDuration = 30.minutes
+            )
+        )
+        coVerify(exactly = 0) { pomodoroServiceLauncher.stopTimer() }
+
+        viewModel.cancelTimer()
+
+        coVerify(exactly = 0) { pomodoroServiceLauncher.stopTimer() }
+
+        val startedAt = Instant.now().minusMillis(30.minutes.inWholeMilliseconds)
+        timerStateFlow.update {
+            TimerManager.TimerState.Running(
+                startedAt = startedAt,
+                remainingDuration = 29.minutes,
+                totalDuration = 30.minutes,
+                millisPerTick = 1000,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Running(
+                remainingDuration = 29.minutes,
+                totalDuration = 30.minutes
+            )
+        )
+        coVerify(exactly = 0) { pomodoroServiceLauncher.stopTimer() }
+
+        viewModel.cancelTimer()
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.stopTimer() }
+    }
+
+    @Test
+    fun `cancelTimer calls stopTimer when UI state is running`() = runTest {
+        timerStateFlow.update {
+            TimerManager.TimerState.Running(
+                startedAt = Instant.now(),
+                totalDuration = 30.minutes,
+                remainingDuration = 29.minutes,
+                millisPerTick = 1000,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Running(
+                remainingDuration = 29.minutes,
+                totalDuration = 30.minutes
+            )
+        )
+
+        viewModel.cancelTimer()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.stopTimer() }
+    }
+
+    @Test
+    fun `cancelTimer calls stopTimer when UI state is paused`() = runTest {
+        timerStateFlow.update {
+            TimerManager.TimerState.Paused(
+                startedAt = Instant.now(),
+                remainingDuration = 29.minutes,
+                totalDuration = 30.minutes,
+                millisPerTick = 1000,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Paused(
+                remainingDuration = 29.minutes,
+                totalDuration = 30.minutes
+            )
+        )
+
+        viewModel.cancelTimer()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.stopTimer() }
+    }
+
+    @Test
+    fun `cancelTimer updates bound task when stopped`() = runTest {
+        val createdAt = Instant.now()
+        coEvery { taskDataRepository.getTimedTaskById(1) } returns TimedTaskDataEntity(
+            1,
+            "Task 1",
+            null,
+            15.minutes,
+            createdAt = createdAt
+        )
+        coEvery { taskDataRepository.updateTimedTask(any()) } returns true
+
+        viewModel.setTimedTaskId(1)
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.resetTimer(15.minutes) }
+
+        timerStateFlow.update { TimerManager.TimerState.Ready(15.minutes, 1000) }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Ready(
+                PomodoroBoundTask(
+                    1,
+                    "Task 1",
+                    15.minutes
+                ), 15.minutes
+            )
+        )
+
+        viewModel.startTimer()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.startTimer() }
+
+        timerStateFlow.update {
+            TimerManager.TimerState.Running(
+                startedAt = Instant.now(),
+                totalDuration = 15.minutes,
+                remainingDuration = 15.minutes - 1.seconds,
+                millisPerTick = 1000,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            taskDataRepository.updateTimedTask(
+                TimedTaskDataEntity(
+                    1,
+                    "Task 1",
+                    initialDuration = 15.minutes,
+                    durationRemaining = 15.minutes - 1.seconds,
+                    createdAt = createdAt,
+                )
+            )
+        }
+
+        viewModel.cancelTimer()
+
+        coVerify(exactly = 1) { pomodoroServiceLauncher.stopTimer() }
+
+        timerStateFlow.update {
+            TimerManager.TimerState.Uninitialized
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            taskDataRepository.updateTimedTask(
+                TimedTaskDataEntity(
+                    1,
+                    "Task 1",
+                    initialDuration = 15.minutes,
+                    durationRemaining = 15.minutes - 1.seconds,
+                    createdAt = createdAt,
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `cancelTimer does not call stopTimer when UI state is uninitialized`() = runTest {
+        timerStateFlow.update { TimerManager.TimerState.Uninitialized }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Initial
+        )
+
+        viewModel.cancelTimer()
+
+        coVerify(exactly = 0) { pomodoroServiceLauncher.stopTimer() }
+    }
+
+    @Test
+    fun `cancelTimer does not call stopTimer when UI state is completed`() = runTest {
+        val startedAt = Instant.now().minusMillis(30.minutes.inWholeMilliseconds)
+        timerStateFlow.update {
+            TimerManager.TimerState.Completed(
+                startedAt = startedAt,
+                totalDuration = 30.minutes,
+            )
+        }
+        testCoroutineScheduler.advanceUntilIdle()
+
+        assertThat(uiState.value).isEqualTo(
+            PomodoroTimerUiState.Completed(
+                totalDuration = 30.minutes
+            )
+        )
+
+        viewModel.cancelTimer()
+
+        coVerify(exactly = 0) { pomodoroServiceLauncher.stopTimer() }
+    }
 
 }

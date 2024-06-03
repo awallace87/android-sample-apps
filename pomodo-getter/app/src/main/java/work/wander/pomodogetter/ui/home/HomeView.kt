@@ -163,15 +163,13 @@ fun HomeViewContents(
             tasks = tasks,
             modifier = Modifier
                 .padding(8.dp)
-                .fillMaxWidth()
-                .heightIn(min = 200.dp, max = 400.dp),
+                .fillMaxWidth(),
             onTaskSelected = onTaskSelected,
             onTaskCompletionChanged = onTaskCompletionChanged,
         )
         HomeAddNewTimedTaskCard(
             modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(),
+                .padding(8.dp),
             onNewTaskAdded = { name, duration ->
                 onNewTimedTaskAdded(name, duration)
             },
@@ -276,7 +274,8 @@ fun HomeViewTaskListCard(
                 Spacer(modifier = Modifier.height(4.dp))
                 val incompleteTasks = tasks.filter { !it.isCompleted }
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .heightIn(min = 200.dp, max = 400.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -308,7 +307,8 @@ fun HomeViewTaskListCard(
                 )
                 val completedTasks = tasks.filter { it.isCompleted }
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .heightIn(min = 200.dp, max = 400.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {

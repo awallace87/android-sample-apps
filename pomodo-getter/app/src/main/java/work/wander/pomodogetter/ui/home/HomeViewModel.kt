@@ -67,7 +67,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch(backgroundDispatcher) {
             val taskEntity = taskDataRepository.getTaskById(taskId)
             taskEntity?.let {
-                taskDataRepository.updateTask(taskEntity.copy(isCompleted = !taskEntity.isCompleted))
+                taskDataRepository.updateTask(taskEntity.copy(isCompleted = isCompleted))
             }
         }
     }
