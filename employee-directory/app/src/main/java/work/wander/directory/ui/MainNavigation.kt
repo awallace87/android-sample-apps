@@ -8,12 +8,25 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import kotlinx.serialization.Serializable
 import work.wander.directory.ui.directory.DirectoryScreenView
 import work.wander.directory.ui.directory.DirectoryScreenViewModel
 import work.wander.directory.ui.employee.EmployeeScreenView
 import work.wander.directory.ui.employee.EmployeeScreenViewModel
 import work.wander.directory.ui.settings.ApplicationSettingsView
 import work.wander.directory.ui.settings.ApplicationSettingsViewModel
+
+@Serializable
+object Directory
+
+@Serializable
+data class EmployeeDetails(
+    val employeeId: String,
+)
+
+@Serializable
+object Settings
 
 /**
  * Main navigation for the app.
@@ -23,8 +36,8 @@ import work.wander.directory.ui.settings.ApplicationSettingsViewModel
 @Composable
 fun MainNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "directory") {
-        composable("directory") {
+    NavHost(navController = navController, startDestination = Directory) {
+        composable<Directory> {
             val directoryScreenViewModel = hiltViewModel<DirectoryScreenViewModel>()
 
             val uiState = directoryScreenViewModel.uiState.collectAsState()
@@ -33,17 +46,17 @@ fun MainNavigation() {
                 onRefreshRequested = { directoryScreenViewModel.fetchEmployees() },
                 isRefreshingData = directoryScreenViewModel.isRefreshing,
                 onEmployeeSelected = {
-                    navController.navigate("employee/$it")
+                    navController.navigate(EmployeeDetails(it))
                 },
                 refreshOnStart = true,
-                onSettingsSelected = { navController.navigate("settings") }
+                onSettingsSelected = { navController.navigate(Settings) }
             )
         }
-        composable("employee/{employeeId}") { backStackEntry ->
-            val employeeId = backStackEntry.arguments?.getString("employeeId") ?: ""
+        composable<EmployeeDetails> { backStackEntry ->
+            val employeeDetails: EmployeeDetails = backStackEntry.toRoute()
             val employeeScreenViewModel = hiltViewModel<EmployeeScreenViewModel>()
 
-            employeeScreenViewModel.setEmployeeId(employeeId)
+            employeeScreenViewModel.setEmployeeId(employeeDetails.employeeId)
 
             val uiState = employeeScreenViewModel.uiState.collectAsState()
 
@@ -58,7 +71,7 @@ fun MainNavigation() {
                 }
             )
         }
-        composable("settings") {
+        composable<Settings> {
             val applicationSettingsViewModel = hiltViewModel<ApplicationSettingsViewModel>()
             val applicationSettings =
                 applicationSettingsViewModel.getApplicationSettings().collectAsState()
