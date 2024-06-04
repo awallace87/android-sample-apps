@@ -73,7 +73,7 @@ class DefaultRemoteEmployeeDataSourceTest {
         val result = dataSource.refreshDataFromRemote()
         scheduler.advanceUntilIdle()
 
-        assertThat(result).isInstanceOf(RemoteEmployeeDataSource.EmployeeDataResponse.Success::class.java)
+        assertThat(result).isInstanceOf(EmployeeDataResponse.Success::class.java)
     }
 
     @Test
@@ -91,8 +91,8 @@ class DefaultRemoteEmployeeDataSourceTest {
 
         val result = dataSource.refreshDataFromRemote()
 
-        assertThat(result).isInstanceOf(RemoteEmployeeDataSource.EmployeeDataResponse.Error::class.java)
-        assertThat((result as RemoteEmployeeDataSource.EmployeeDataResponse.Error).message).isEqualTo("Failed to fetch data")
+        assertThat(result).isInstanceOf(EmployeeDataResponse.Error::class.java)
+        assertThat((result as EmployeeDataResponse.Error).message).isEqualTo("Failed to fetch data")
     }
 
     @Test
@@ -110,7 +110,7 @@ class DefaultRemoteEmployeeDataSourceTest {
 
         val result = dataSource.refreshDataFromRemote()
 
-        assertThat(result).isInstanceOf(RemoteEmployeeDataSource.EmployeeDataResponse.Success::class.java)
+        assertThat(result).isInstanceOf(EmployeeDataResponse.Success::class.java)
     }
 
 }

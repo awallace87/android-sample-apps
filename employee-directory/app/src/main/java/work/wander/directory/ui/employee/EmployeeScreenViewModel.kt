@@ -39,7 +39,7 @@ class EmployeeScreenViewModel @Inject constructor(
         }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = Duration.ofSeconds(1).toMillis()),
+        started = SharingStarted.Eagerly,
         initialValue = EmployeeScreenUiState.Initial
     )
 

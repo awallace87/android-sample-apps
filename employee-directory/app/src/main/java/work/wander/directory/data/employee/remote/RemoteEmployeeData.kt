@@ -44,7 +44,7 @@ data class RemoteEmployeeData(
  * Data class representing the structure of the "response" from the employee data API.
  */
 @JsonClass(generateAdapter = true)
-data class EmployeeDataResponse(
+data class RemoteEmployeeDataResponseBody(
     val employees: List<RemoteEmployeeData>
 )
 

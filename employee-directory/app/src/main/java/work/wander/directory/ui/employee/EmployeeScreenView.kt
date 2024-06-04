@@ -172,7 +172,8 @@ fun EmployeeDetailsView(
             text = employee.biography,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 16.dp),
         )
         Spacer(modifier = Modifier.height(16.dp))
         Row(

@@ -6,13 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import work.wander.directory.data.employee.remote.EmployeeDataResponse
 import work.wander.directory.data.employee.remote.ForEmployeeRequest
 import work.wander.directory.data.employee.remote.RemoteEmployeeDataSource
 import work.wander.directory.data.employee.room.EmployeeDatabase
@@ -25,7 +25,7 @@ import javax.inject.Inject
 @HiltViewModel
 class DirectoryScreenViewModel @Inject constructor(
     private val remoteEmployeeDataSource: RemoteEmployeeDataSource,
-    private val employeeDatabase: EmployeeDatabase,
+    employeeDatabase: EmployeeDatabase,
     private val appLogger: AppLogger,
     @ForEmployeeRequest private val coroutineDispatcher: CoroutineDispatcher,
 )
@@ -40,7 +40,7 @@ class DirectoryScreenViewModel @Inject constructor(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            started = SharingStarted.Eagerly,
             initialValue = DirectoryScreenUiState.Loading
         )
 
@@ -54,7 +54,7 @@ class DirectoryScreenViewModel @Inject constructor(
 
             isRefreshingEmployeeData.value = true
             val remoteFetchResult = remoteEmployeeDataSource.refreshDataFromRemote()
-            if (remoteFetchResult is RemoteEmployeeDataSource.EmployeeDataResponse.Success) {
+            if (remoteFetchResult is EmployeeDataResponse.Success) {
                 // Data was fetched successfully
                 // Log the data
                 appLogger.info("Fetched employee data: ${remoteFetchResult.employees}")
