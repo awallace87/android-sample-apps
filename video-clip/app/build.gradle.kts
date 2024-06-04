@@ -5,6 +5,7 @@ plugins {
     id("kotlin-kapt")
     alias(libs.plugins.daggerHiltAndroid)
     alias(libs.plugins.protoBufPlugin)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 android {
@@ -13,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "work.wander.videoclip"
-        minSdk = 28
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -53,8 +54,14 @@ android {
         }
     }
     kapt {
+        //TODO: Remove this once https://issuetracker.google.com/issues/202825622 is fixed
         generateStubs = true
         correctErrorTypes = true
+    }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+        // Added to resolve build error involving multiple TypeConverter declarations (https://github.com/google/ksp/issues/1700)
+        arg("room.generateKotlin", "true")
     }
 }
 
@@ -107,10 +114,6 @@ dependencies {
     implementation(libs.okhttp.logging)
     testImplementation(libs.okhttp.mockwebserver)
 
-    // Moshi
-    implementation(libs.moshi.core)
-    implementation(libs.moshi.kotlin)
-
     // Picasso
     implementation(libs.picasso)
 
@@ -137,6 +140,9 @@ dependencies {
     implementation(libs.media3.common)
     implementation(libs.media3.ui)
     implementation(libs.media3.exoplayer)
+
+    // Kotlin Serialization
+    implementation(libs.kotlin.serialization.json)
 
     // Testing Core
     testImplementation(libs.junit)
