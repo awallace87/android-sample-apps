@@ -16,6 +16,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Example"
         tools:targetApi="31">
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="remove" />
         <activity
             android:name="work.wander.wikiview.ui.MainActivity"
             android:exported="true"

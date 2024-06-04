@@ -5,12 +5,13 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import java.time.Duration
 import javax.inject.Qualifier
 import javax.inject.Singleton
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 
 @Qualifier
-@Retention(AnnotationRetention.BINARY)
+@Retention(AnnotationRetention.RUNTIME)
 annotation class PageDuration
 
 @Module
@@ -21,7 +22,7 @@ class WikipediaPageModule {
     @Singleton
     @PageDuration
     fun providesPageDuration(): Duration {
-        return Duration.ofDays(7)
+        return 7.days
     }
 }
 
