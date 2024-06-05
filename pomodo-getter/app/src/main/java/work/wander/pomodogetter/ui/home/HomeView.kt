@@ -57,7 +57,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -71,8 +70,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import kotlinx.coroutines.delay
+import work.wander.pomodogetter.R
 import work.wander.pomodogetter.ui.theme.AppTheme
-import work.wander.pomogogetter.R
 import java.time.LocalDate
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO

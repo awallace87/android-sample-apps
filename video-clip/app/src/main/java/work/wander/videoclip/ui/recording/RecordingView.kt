@@ -6,6 +6,7 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -257,6 +258,7 @@ fun RecordingStatusDisplay(
             modifier = Modifier
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                .border(2.dp, MaterialTheme.colorScheme.secondary, CircleShape)
                 .padding(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -272,7 +274,7 @@ fun RecordingStatusDisplay(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Starting",
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier
                             .padding(end = 8.dp)
@@ -287,7 +289,7 @@ fun RecordingStatusDisplay(
                         modifier = Modifier
                             .size(36.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(2.dp))
                     val durationMillis = videoRecordingState.recordingDurationMillis
                     val hours = TimeUnit.MILLISECONDS.toHours(durationMillis)
                     val minutes =
@@ -301,7 +303,7 @@ fun RecordingStatusDisplay(
                         String.format("%02d:%02d:%02d:%03d", hours, minutes, seconds, millis)
                     Text(
                         text = timestamp,
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier
                             .padding(end = 8.dp)
@@ -319,7 +321,7 @@ fun RecordingStatusDisplay(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Stopping",
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier
                             .padding(end = 8.dp)
@@ -338,7 +340,7 @@ fun RecordingStatusDisplay(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Saved Video",
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier
                             .padding(end = 8.dp)

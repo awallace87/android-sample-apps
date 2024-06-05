@@ -57,6 +57,11 @@ android {
         //TODO: Remove this once https://issuetracker.google.com/issues/202825622 is fixed
         generateStubs = true
         correctErrorTypes = true
+        arguments {
+            arg("dagger.fastInit", "enabled")
+            arg("dagger.formatGeneratedSource", "disabled")
+            arg("dagger.fullBindingGraphValidation", "WARNING")
+        }
     }
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
