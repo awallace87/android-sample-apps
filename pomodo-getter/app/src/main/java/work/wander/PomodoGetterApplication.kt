@@ -5,7 +5,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
-import work.wander.pomogogetter.BuildConfig
+import work.wander.pomodogetter.BuildConfig
 import javax.inject.Inject
 
 @HiltAndroidApp

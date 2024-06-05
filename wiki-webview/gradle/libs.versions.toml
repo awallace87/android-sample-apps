@@ -3,9 +3,6 @@ agp = "8.4.1"
 kotlin = "1.9.23"
 ksp = "1.9.23-1.0.19"
 coreKtx = "1.13.1"
-junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.5.1"
 lifecycleRuntimeKtx = "2.7.0"
 activityCompose = "1.9.0"
 composeBom = "2024.05.00"
@@ -21,10 +18,8 @@ timber = "5.0.1"
 workManager = "2.9.0"
 hiltWork = "1.2.0"
 okHttpBom = "4.12.0"
-okHttpMockWebServer = "4.12.0"
 retrofit = "2.11.0"
 picasso = "2.8"
-truthAssert = "1.4.2"
 coilImage = "2.6.0"
 uiTextGoogleFonts = "1.6.7"
 accompanistPermissions = "0.23.1"
@@ -35,7 +30,15 @@ material3Adaptive = "1.0.0-beta01"
 
 # For Extended Material Icons
 materialIcons = "1.6.7"
-composePreviewRenderer = "0.0.1-alpha01"
+
+# Testing
+junit = "4.13.2"
+junitVersion = "1.1.5"
+espressoCore = "3.5.1"
+truthAssert = "1.4.2"
+okHttpMockWebServer = "4.12.0"
+mockk = "1.12.0"
+kotlinXCoroutinesTest = "1.5.2"
 
 
 
@@ -129,7 +132,11 @@ kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-s
 # Truth Assert
 truth-assert = { group = "com.google.truth", name = "truth", version.ref = "truthAssert" }
 
-compose-preview-renderer = { group = "com.android.tools.compose", name = "compose-preview-renderer", version.ref = "composePreviewRenderer" }
+# Mockk
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+
+# Kotlin Coroutines Test
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinXCoroutinesTest" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

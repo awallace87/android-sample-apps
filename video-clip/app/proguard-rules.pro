@@ -19,3 +19,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# For Material3 (particularly Extended) icons
+-keep class androidx.compose.material.icons.** { *; }
+-keep class androidx.compose.material.icons.filled.** { *; }
+-keep class androidx.compose.material.icons.outlined.** { *; }
+-keep class androidx.compose.material.icons.rounded.** { *; }
+-keep class androidx.compose.material.icons.sharp.** { *; }

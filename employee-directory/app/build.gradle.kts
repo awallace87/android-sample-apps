@@ -5,6 +5,7 @@ plugins {
     id("kotlin-kapt")
     alias(libs.plugins.daggerHiltAndroid)
     alias(libs.plugins.protoBufPlugin)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 android {
@@ -53,7 +54,19 @@ android {
         }
     }
     kapt {
+        //TODO: Remove this once https://issuetracker.google.com/issues/202825622 is fixed
+        generateStubs = true
         correctErrorTypes = true
+        arguments {
+            arg("dagger.fastInit", "enabled")
+            arg("dagger.formatGeneratedSource", "disabled")
+            arg("dagger.fullBindingGraphValidation", "WARNING")
+        }
+    }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+        // Added to resolve build error involving multiple TypeConverter declarations (https://github.com/google/ksp/issues/1700)
+        arg("room.generateKotlin", "true")
     }
 }
 
@@ -68,6 +81,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.nav.compose)
+
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.extensions)
 
     // Room
     implementation(libs.androidx.room.runtime)
@@ -99,6 +116,9 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.hilt.work)
     androidTestImplementation(libs.androidx.work.testing)
+
+    // Kotlin Serialization
+    implementation(libs.kotlin.serialization.json)
 
     // OkHttp
     implementation(platform(libs.okhttp.bom))
@@ -133,6 +153,12 @@ dependencies {
 
     // Truth
     testImplementation(libs.truth.assert)
+
+    // Mockk
+    testImplementation(libs.mockk)
+
+    // Coroutines Test
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 protobuf {

@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "work.wander.pomogogetter"
+    namespace = "work.wander.pomodogetter"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "work.wander.pomogogetter"
+        applicationId = "work.wander.pomodogetter"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
@@ -27,7 +27,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -57,6 +57,12 @@ android {
         //TODO: Remove this once https://issuetracker.google.com/issues/202825622 is fixed
         generateStubs = true
         correctErrorTypes = true
+        arguments {
+            arg("dagger.fastInit", "enabled")
+            arg("dagger.formatGeneratedSource", "disabled")
+            arg("dagger.fullBindingGraphValidation", "WARNING")
+        }
+
     }
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")

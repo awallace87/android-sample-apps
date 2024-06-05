@@ -1,8 +1,11 @@
 package work.wander.videoclip.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +32,7 @@ import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Timelapse
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -101,23 +105,32 @@ fun HomeTopAppBar(modifier: Modifier = Modifier, onSettingsSelected: () -> Unit 
             )
         },
         navigationIcon = {
-            Image(
-                painter = painterResource(id = R.drawable.app_icon),
-                contentDescription = "App Icon",
+            Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .padding(8.dp)
                     .clip(CircleShape)
-            )
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.app_icon),
+                    contentDescription = "App Icon",
+                    modifier = Modifier
+                        .size(48.dp)
+                )
+            }
 
         },
         colors = TopAppBarDefaults.topAppBarColors().copy(
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
             titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-
-            ),
+        ),
         modifier = modifier
             .padding(8.dp)
-            .clip(MaterialTheme.shapes.extraLarge),
+            .clip(MaterialTheme.shapes.extraLarge)
+            .border(
+                width = 2.dp,
+                color = MaterialTheme.colorScheme.primary,
+                shape = MaterialTheme.shapes.extraLarge
+            ),
         actions = {
             IconButton(onClick = { onSettingsSelected() }) {
                 Icon(
@@ -151,7 +164,6 @@ fun HomeContent(
             elevation = CardDefaults.elevatedCardElevation(),
             shape = MaterialTheme.shapes.extraLarge,
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             )
         ) {
@@ -215,7 +227,6 @@ fun HomeContent(
             elevation = CardDefaults.elevatedCardElevation(),
             shape = MaterialTheme.shapes.extraLarge,
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             )
         ) {
@@ -290,9 +301,9 @@ fun PreviousRecordingItemView(
             .padding(8.dp),
         elevation = CardDefaults.elevatedCardElevation(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
+        ),
+        border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -340,7 +351,7 @@ fun PreviousRecordingItemView(
                     horizontalArrangement = Arrangement.Center,
                 ) {
                     Icon(
-                        Icons.Outlined.Timelapse,
+                        Icons.Outlined.Timer,
                         contentDescription = "Video Duration",
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(24.dp)

@@ -6,6 +6,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import kotlinx.serialization.Serializable
 import work.wander.videoclip.ui.home.HomeView
 import work.wander.videoclip.ui.home.HomeViewModel
 import work.wander.videoclip.ui.recording.RecordingScreenView
@@ -15,27 +17,57 @@ import work.wander.videoclip.ui.settings.ApplicationSettingsViewModel
 import work.wander.videoclip.ui.video.VideoPlaybackView
 import work.wander.videoclip.ui.video.VideoPlaybackViewModel
 
+/**
+ * Main navigation for the application
+
+ */
+@Serializable
+object Home
+
+/**
+ * Represents the recording screen.
+
+ */
+@Serializable
+object Recording
+
+/**
+ * Represents the video playback screen.
+ *
+ * @property videoId The ID of the video to be played back.
+
+ */
+@Serializable
+data class VideoPlayback(val videoId: Long)
+
+/**
+ * Represents the settings screen.
+
+ */
+@Serializable
+object Settings
+
 @Composable
 fun MainNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "home") {
-        composable("home") {
+    NavHost(navController = navController, startDestination = Home) {
+        composable<Home> {
             val homeViewModel: HomeViewModel = hiltViewModel<HomeViewModel>()
 
             HomeView(
                 previousRecordings = homeViewModel.getPreviousRecordings().collectAsState().value,
                 onSettingsSelected = {
-                    navController.navigate("settings")
+                    navController.navigate(Settings)
                 },
                 onRecordingSelected = { previousRecordingItem ->
-                    navController.navigate("video/${previousRecordingItem.videoRepositoryId}")
+                    navController.navigate(VideoPlayback(previousRecordingItem.videoRepositoryId))
                 },
                 onBeginRecordingSelected = {
-                    navController.navigate("recording")
+                    navController.navigate(Recording)
                 }
             )
         }
-        composable("recording") {
+        composable<Recording> {
             val recordingViewModel: RecordingViewModel = hiltViewModel<RecordingViewModel>()
             val availableCameras = recordingViewModel.availableCameras.collectAsState().value
 
@@ -57,13 +89,13 @@ fun MainNavigation() {
                 }
             )
         }
-        composable("video/{videoId}") {
+        composable<VideoPlayback> {
             val videoPlaybackViewModel: VideoPlaybackViewModel =
                 hiltViewModel<VideoPlaybackViewModel>()
 
-            val videoId = it.arguments?.getString("videoId")?.toLongOrNull()
+            val videoDetails: VideoPlayback = it.toRoute()
 
-            videoPlaybackViewModel.setVideoId(videoId ?: VideoPlaybackViewModel.NO_VIDEO_SPECIFIED)
+            videoPlaybackViewModel.setVideoId(videoDetails.videoId)
 
             val videoPlaybackUiState =
                 videoPlaybackViewModel.getVideoPlaybackUiState().collectAsState().value
@@ -80,7 +112,7 @@ fun MainNavigation() {
 
             )
         }
-        composable("settings") {
+        composable<Settings> {
             val applicationSettingsViewModel: ApplicationSettingsViewModel =
                 hiltViewModel<ApplicationSettingsViewModel>()
             val applicationSettings =

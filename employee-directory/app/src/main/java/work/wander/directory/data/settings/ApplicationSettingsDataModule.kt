@@ -38,7 +38,10 @@ class ApplicationSettingsDataModule {
             serializer = ApplicationSettingsSerializer,
             produceFile = {
                 applicationContext.filesDir.resolve("application_settings.pb")
-            }
+            },
+            migrations = listOf(
+                InitialApplicationSettingsMigration()
+            )
         )
     }
 

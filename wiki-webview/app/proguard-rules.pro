@@ -5,6 +5,7 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
+# TODO: Evaluate whether this is needed (or use once proper JS interface implemented)
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:
@@ -19,3 +20,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# For Material3 (particularly Extended) icons
+-keep class androidx.compose.material.icons.** { *; }
+-keep class androidx.compose.material.icons.filled.** { *; }
+-keep class androidx.compose.material.icons.outlined.** { *; }
+-keep class androidx.compose.material.icons.rounded.** { *; }
+-keep class androidx.compose.material.icons.sharp.** { *; }

@@ -26,13 +26,14 @@ interface RemoteEmployeeDataSource {
      */
     suspend fun refreshDataFromRemote(): EmployeeDataResponse
 
-    /**
-     * Sealed class representing the possible responses from [refreshDataFromRemote].
-     */
-    sealed interface EmployeeDataResponse {
-        data class Success(val employees: List<RemoteEmployeeData>) : EmployeeDataResponse
-        data class Error(val message: String) : EmployeeDataResponse
-    }
+}
+
+/**
+ * Sealed class representing the possible responses from [refreshDataFromRemote].
+ */
+sealed interface EmployeeDataResponse {
+    data class Success(val employees: List<RemoteEmployeeData>) : EmployeeDataResponse
+    data class Error(val message: String) : EmployeeDataResponse
 }
 
 /**
@@ -62,12 +63,12 @@ class DefaultRemoteEmployeeDataSource @Inject constructor(
         .add(EmployeeTypeJsonAdapter())
         .build()
 
-    override suspend fun refreshDataFromRemote(): RemoteEmployeeDataSource.EmployeeDataResponse {
+    override suspend fun refreshDataFromRemote(): EmployeeDataResponse {
         return withContext(dispatcher) {
             val currentActiveUrl = dataSourceUrl.value
             if (currentActiveUrl == EmployeeDataUrl.Unknown) {
                 appLogger.warn("No active data source URL found. Cancelling fetch request.")
-                return@withContext RemoteEmployeeDataSource.EmployeeDataResponse.Error("No active data source URL present")
+                return@withContext EmployeeDataResponse.Error("No active data source URL present")
             }
 
             val request = okhttp3.Request.Builder()
@@ -83,13 +84,13 @@ class DefaultRemoteEmployeeDataSource @Inject constructor(
                     employeeDatabase.employeeDao().insertEmployees(parsedData.map {
                         it.toEmployeeEntity()
                     })
-                    return@withContext RemoteEmployeeDataSource.EmployeeDataResponse.Success(parsedData)
+                    return@withContext EmployeeDataResponse.Success(parsedData)
                 }
                 appLogger.error("Failed to parse server response")
-                return@withContext RemoteEmployeeDataSource.EmployeeDataResponse.Error("Failed to parse response")
+                return@withContext EmployeeDataResponse.Error("Failed to parse response")
             } else {
                 appLogger.error("Failed to fetch data from server ${response.code} ${response.message} ${response.body?.string() ?: ""}")
-                return@withContext RemoteEmployeeDataSource.EmployeeDataResponse.Error("Failed to fetch data")
+                return@withContext EmployeeDataResponse.Error("Failed to fetch data")
             }
         }
     }
@@ -98,8 +99,8 @@ class DefaultRemoteEmployeeDataSource @Inject constructor(
      * Parses the given JSON response into a list of [RemoteEmployeeData].
      */
     private fun parseJsonToEmployeeData(json: String): List<RemoteEmployeeData> {
-        val adapter: JsonAdapter<EmployeeDataResponse> =
-            moshi.adapter(EmployeeDataResponse::class.java)
+        val adapter: JsonAdapter<RemoteEmployeeDataResponseBody> =
+            moshi.adapter(RemoteEmployeeDataResponseBody::class.java)
         val employeeDataWrapper = adapter.fromJson(json)
         return employeeDataWrapper?.employees ?: emptyList()
     }
