@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+option java_package = "work.wander.funnyface.proto.settings";
+option java_multiple_files = true;
+
+message ApplicationSettings {
+  bool isDeveloperModeEnabled = 1;
+}
