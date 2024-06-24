@@ -1,7 +1,10 @@
 package work.wander.funnyface.ui.camera
 
+import android.annotation.SuppressLint
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.CameraSelector.LENS_FACING_BACK
+import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageAnalysis.COORDINATE_SYSTEM_VIEW_REFERENCED
 import androidx.camera.mlkit.vision.MlKitAnalyzer
@@ -43,6 +46,7 @@ sealed interface FaceDetectionResult {
 
     data class FaceDetected(
         val timestamp: Long,
+        val shouldMirror: Boolean = false,
         val faces: List<Face>
     ) : FaceDetectionResult
 }
@@ -79,9 +83,10 @@ class CameraViewModel @Inject constructor(
         lifecycleCameraController.setImageAnalysisAnalyzer(backgroundExecutor, mlKitAnalyzer)
     }
 
-    private val faceDetectionsFlow = MutableStateFlow<FaceDetectionResult>(FaceDetectionResult.NoDetection)
+    private val faceDetectionsFlow =
+        MutableStateFlow<FaceDetectionResult>(FaceDetectionResult.NoDetection)
 
-    fun faceDetections() : StateFlow<FaceDetectionResult> {
+    fun faceDetections(): StateFlow<FaceDetectionResult> {
         return faceDetectionsFlow
     }
 
@@ -115,21 +120,25 @@ class CameraViewModel @Inject constructor(
     }
 
 
+    @SuppressLint("RestrictedApi")
     private fun processDetectionResult(result: MlKitAnalyzer.Result?) {
         if (result == null) {
             faceDetectionsFlow.value = FaceDetectionResult.NoDetection
         } else {
             val resultValue = result.getValue(faceDetection)
+
             @Suppress("UNCHECKED_CAST")
             val faces: List<Face> =
                 resultValue as? List<Face> ?: emptyList()
 
+            val shouldMirror = (selectedCameraDevice.value.cameraSelector?.lensFacing
+                ?: LENS_FACING_BACK) == LENS_FACING_FRONT
+
             faceDetectionsFlow.value = FaceDetectionResult.FaceDetected(
                 result.timestamp,
+                shouldMirror,
                 faces,
             )
-
         }
     }
-
 }

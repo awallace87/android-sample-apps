@@ -170,21 +170,35 @@ fun FaceDetectionResultOverlay(
                         // TODO adjust to work with both camera lens facings. This works with Front Facing Only
                         if (leftEar != null && rightEar != null) {
                             val faceHeight = boundingBox.height().toFloat()
-                            val glassesTopLeft = Offset(
-                                rightEar.position.x,
-                                rightEar.position.y - (faceHeight / 3f)
-                            )
+                            val destRectF = if (detectionResult.shouldMirror) {
+                                val glassesTopLeft = Offset(
+                                    rightEar.position.x,
+                                    rightEar.position.y - (faceHeight / 3f)
+                                )
+                                RectF(
+                                    glassesTopLeft.x,
+                                    glassesTopLeft.y,
+                                    leftEar.position.x,
+                                    glassesTopLeft.y + (faceHeight / 1.75f)
+                                )
+                            } else {
+                                val glassesTopLeft = Offset(
+                                    leftEar.position.x,
+                                    leftEar.position.y - (faceHeight / 3f)
+                                )
+                                RectF(
+                                    glassesTopLeft.x,
+                                    glassesTopLeft.y,
+                                    rightEar.position.x,
+                                    glassesTopLeft.y + (faceHeight / 1.75f)
+                                )
+                            }
 
                             drawIntoCanvas { canvas ->
                                 canvas.nativeCanvas.drawBitmap(
                                     originalGlassesBitmap,
                                     null,
-                                    RectF(
-                                        glassesTopLeft.x,
-                                        glassesTopLeft.y,
-                                        leftEar.position.x,
-                                        glassesTopLeft.y + (faceHeight / 1.75f)
-                                    ),
+                                    destRectF,
                                     paint
                                 )
                             }
