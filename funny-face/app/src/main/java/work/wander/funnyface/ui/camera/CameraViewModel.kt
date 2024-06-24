@@ -1,12 +1,16 @@
 package work.wander.funnyface.ui.camera
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.CameraSelector.LENS_FACING_BACK
 import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageAnalysis.COORDINATE_SYSTEM_VIEW_REFERENCED
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.mlkit.vision.MlKitAnalyzer
 import androidx.camera.view.LifecycleCameraController
 import androidx.lifecycle.ViewModel
@@ -22,6 +26,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import work.wander.funnyface.camera.CameraXManager
+import work.wander.funnyface.domain.image.OverlayImageSaver
 import work.wander.funnyface.framework.annotation.BackgroundThread
 import work.wander.funnyface.framework.logging.AppLogger
 import java.util.concurrent.Executor
@@ -42,7 +47,7 @@ data class CameraDeviceSelectionUiItem(
 }
 
 sealed interface FaceDetectionResult {
-    object NoDetection : FaceDetectionResult
+    data object NoDetection : FaceDetectionResult
 
     data class FaceDetected(
         val timestamp: Long,
@@ -56,6 +61,7 @@ class CameraViewModel @Inject constructor(
     val lifecycleCameraController: LifecycleCameraController,
     private val cameraXManager: CameraXManager,
     @BackgroundThread private val backgroundExecutor: Executor,
+    private val overlayImageSaver: OverlayImageSaver,
     private val appLogger: AppLogger,
 ) : ViewModel() {
     private val faceDetectionOptions = FaceDetectorOptions.Builder()
@@ -75,12 +81,18 @@ class CameraViewModel @Inject constructor(
     }
 
     init {
-        lifecycleCameraController.setEnabledUseCases(LifecycleCameraController.IMAGE_ANALYSIS)
+        val enabledUseCases = LifecycleCameraController.IMAGE_ANALYSIS or LifecycleCameraController.IMAGE_CAPTURE
+        lifecycleCameraController.setEnabledUseCases(enabledUseCases)
         lifecycleCameraController.imageAnalysisImageQueueDepth = 10
         lifecycleCameraController.imageAnalysisBackpressureStrategy =
             ImageAnalysis.STRATEGY_BLOCK_PRODUCER
 
         lifecycleCameraController.setImageAnalysisAnalyzer(backgroundExecutor, mlKitAnalyzer)
+
+        // Image Capture
+        lifecycleCameraController.imageCaptureMode = ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY
+        lifecycleCameraController.imageCaptureFlashMode = ImageCapture.FLASH_MODE_OFF
+        lifecycleCameraController.imageCaptureIoExecutor = backgroundExecutor
     }
 
     private val faceDetectionsFlow =
@@ -119,6 +131,25 @@ class CameraViewModel @Inject constructor(
             ?: appLogger.error("Camera selector is null for camera device: $cameraDeviceSelectionUiItem")
     }
 
+    private val imageCaptureCallback = object : ImageCapture.OnImageCapturedCallback() {
+        override fun onCaptureSuccess(image: ImageProxy) {
+            super.onCaptureSuccess(image)
+            appLogger.info("Image captured successfully")
+        }
+
+        override fun onError(exception: ImageCaptureException) {
+            super.onError(exception)
+            appLogger.error("Error capturing image: ${exception.message}")
+        }
+    }
+
+    fun captureImage(overlayBitmap: Bitmap) {
+        overlayImageSaver.setOverlayBitmap(overlayBitmap)
+        lifecycleCameraController.takePicture(
+            backgroundExecutor,
+            overlayImageSaver
+        )
+    }
 
     @SuppressLint("RestrictedApi")
     private fun processDetectionResult(result: MlKitAnalyzer.Result?) {

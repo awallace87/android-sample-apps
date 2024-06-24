@@ -1,5 +1,6 @@
 package work.wander.funnyface.ui.camera
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Paint
 import android.graphics.RectF
@@ -17,10 +18,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Camera
 import androidx.compose.material.icons.outlined.Cameraswitch
 import androidx.compose.material.icons.outlined.FaceRetouchingOff
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -58,6 +62,8 @@ fun CameraView(
     availableDevices: List<CameraDeviceSelectionUiItem>,
     onCameraSelected: (CameraDeviceSelectionUiItem) -> Unit,
     latestDetectionResult: State<FaceDetectionResult>,
+    onImageCaptureClicked: (Bitmap) -> Unit,
+    onGallerySelected: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val cameraPermissions = rememberPermissionState(permission = android.Manifest.permission.CAMERA)
@@ -69,6 +75,7 @@ fun CameraView(
     } else {
         Box(modifier = modifier) {
             val lifecycleOwner = LocalLifecycleOwner.current
+            val latestOverlayBitmap = remember { mutableStateOf<Bitmap?>(null) }
             DisposableEffect(lifecycleOwner) {
                 lifecycleCameraController.bindToLifecycle(lifecycleOwner)
 
@@ -83,13 +90,48 @@ fun CameraView(
                     .fillMaxHeight(0.8f)
                     .align(Alignment.TopStart)
             )
+
             FaceDetectionResultOverlay(
                 latestDetectionResult = latestDetectionResult,
+                onCanvasBitmapCaptured = { bitmap -> latestOverlayBitmap.value = bitmap },
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.8f)
                     .align(Alignment.TopStart)
             )
+
+            OutlinedButton(shape = CircleShape,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp),
+                onClick = {
+                    onGallerySelected()
+                }) {
+                Icon(
+                    imageVector = Icons.Outlined.Image,
+                    contentDescription = "Navigate to Gallery",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+
+            OutlinedButton(
+                shape = CircleShape,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp),
+                onClick = {
+                    latestOverlayBitmap.value?.let { bitmap ->
+                        onImageCaptureClicked(bitmap)
+                    }
+                }) {
+                Icon(
+                    imageVector = Icons.Outlined.Camera,
+                    contentDescription = "Close Camera",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
 
             DeviceSelectionControls(
                 modifier = Modifier
@@ -149,6 +191,7 @@ fun DeviceSelectionControls(
 @Composable
 fun FaceDetectionResultOverlay(
     latestDetectionResult: State<FaceDetectionResult>,
+    onCanvasBitmapCaptured: (Bitmap) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val detectionResult = latestDetectionResult.value
@@ -201,6 +244,21 @@ fun FaceDetectionResultOverlay(
                                     destRectF,
                                     paint
                                 )
+
+                                // Write Overlay to Bitmap for Image Capture
+                                val bitmap = Bitmap.createBitmap(
+                                    size.width.toInt(),
+                                    size.height.toInt(),
+                                    Bitmap.Config.ARGB_8888
+                                )
+                                val bitmapCanvas = android.graphics.Canvas(bitmap)
+                                bitmapCanvas.drawBitmap(
+                                    originalGlassesBitmap,
+                                    null,
+                                    destRectF,
+                                    paint
+                                )
+                                onCanvasBitmapCaptured(bitmap)
                             }
                         }
                     }
