@@ -131,20 +131,11 @@ class CameraViewModel @Inject constructor(
             ?: appLogger.error("Camera selector is null for camera device: $cameraDeviceSelectionUiItem")
     }
 
-    private val imageCaptureCallback = object : ImageCapture.OnImageCapturedCallback() {
-        override fun onCaptureSuccess(image: ImageProxy) {
-            super.onCaptureSuccess(image)
-            appLogger.info("Image captured successfully")
-        }
-
-        override fun onError(exception: ImageCaptureException) {
-            super.onError(exception)
-            appLogger.error("Error capturing image: ${exception.message}")
-        }
-    }
-
+    @SuppressLint("RestrictedApi")
     fun captureImage(overlayBitmap: Bitmap) {
-        overlayImageSaver.setOverlayBitmap(overlayBitmap)
+        val shouldMirror = (selectedCameraDevice.value.cameraSelector?.lensFacing
+            ?: LENS_FACING_BACK) == LENS_FACING_FRONT
+        overlayImageSaver.setOverlayBitmap(overlayBitmap, shouldMirror)
         lifecycleCameraController.takePicture(
             backgroundExecutor,
             overlayImageSaver

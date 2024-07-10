@@ -3,9 +3,11 @@ package work.wander.funnyface.domain.image
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Matrix
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
+import work.wander.funnyface.domain.bitmap.rotateBitmap
 import work.wander.funnyface.framework.clock.AppClock
 import work.wander.funnyface.framework.logging.AppLogger
 import java.io.File
@@ -19,16 +21,19 @@ class OverlayImageSaver @Inject constructor(
 ) : ImageCapture.OnImageCapturedCallback() {
 
     private var latestOverlayBitmap: Bitmap? = null
+    private var shouldMirror: Boolean = false
 
-    fun setOverlayBitmap(bitmap: Bitmap) {
+    fun setOverlayBitmap(bitmap: Bitmap, shouldMirror: Boolean) {
         latestOverlayBitmap = bitmap
+        this.shouldMirror = shouldMirror
     }
 
     override fun onCaptureSuccess(image: ImageProxy) {
         super.onCaptureSuccess(image)
         val imageBitmap = imageProxyToBitmap(image)
+        val rotatedBitmap = rotateBitmap(imageBitmap, image.imageInfo.rotationDegrees.toFloat())
         latestOverlayBitmap?.let { overlayBitmap ->
-            val combinedBitmap = combineBitmaps(imageBitmap, overlayBitmap)
+            val combinedBitmap = combineBitmaps(rotatedBitmap, overlayBitmap)
             saveBitmapToFile(combinedBitmap)
             appLogger.debug("Combined bitmap size: ${combinedBitmap.byteCount}")
         } ?: appLogger.error("Overlay bitmap is null, cannot combine images")
@@ -48,10 +53,12 @@ class OverlayImageSaver @Inject constructor(
     }
 
     private fun combineBitmaps(background: Bitmap, overlay: Bitmap): Bitmap {
+        val resizedOverlay = Bitmap.createScaledBitmap(overlay, background.width, background.height, true)
+        val foreground = if (shouldMirror) mirrorOverlayBitmap(resizedOverlay) else resizedOverlay
         val result = Bitmap.createBitmap(background.width, background.height, background.config)
         val canvas = Canvas(result)
         canvas.drawBitmap(background, 0f, 0f, null)
-        canvas.drawBitmap(overlay, 0f, 0f, null)
+        canvas.drawBitmap(foreground, 0f, 0f, null)
         return result
     }
 
@@ -64,5 +71,12 @@ class OverlayImageSaver @Inject constructor(
         } catch (e: Exception) {
             appLogger.error(e, "Error saving bitmap to file")
         }
+    }
+
+    private fun mirrorOverlayBitmap(bitmap: Bitmap): Bitmap {
+        val matrix = Matrix().apply {
+            postScale(-1f, 1f, bitmap.width / 2f, bitmap.height / 2f)
+        }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 }
