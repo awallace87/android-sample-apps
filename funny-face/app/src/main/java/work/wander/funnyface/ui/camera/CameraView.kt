@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Paint
 import android.graphics.RectF
+import android.widget.Space
 import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -46,6 +48,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -100,47 +103,90 @@ fun CameraView(
                     .align(Alignment.TopStart)
             )
 
-            OutlinedButton(shape = CircleShape,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp),
-                onClick = {
-                    onGallerySelected()
-                }) {
-                Icon(
-                    imageVector = Icons.Outlined.Image,
-                    contentDescription = "Navigate to Gallery",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-
-            OutlinedButton(
-                shape = CircleShape,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp),
-                onClick = {
+            ImageCaptureControls(
+                availableDevices = availableDevices,
+                onCameraSelected = onCameraSelected,
+                onImageCaptureClicked = {
                     latestOverlayBitmap.value?.let { bitmap ->
                         onImageCaptureClicked(bitmap)
                     }
-                }) {
-                Icon(
-                    imageVector = Icons.Outlined.Camera,
-                    contentDescription = "Close Camera",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-
-            DeviceSelectionControls(
+                },
+                onGallerySelected = onGallerySelected,
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
-                availableCameraDevices = availableDevices,
-                onCameraDeviceSelected = onCameraSelected
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp)
+                    .fillMaxHeight(0.2f)
+                    .fillMaxWidth()
             )
         }
+    }
+}
+
+
+@Composable
+fun ImageCaptureControls(
+    availableDevices: List<CameraDeviceSelectionUiItem>,
+    onCameraSelected: (CameraDeviceSelectionUiItem) -> Unit,
+    onImageCaptureClicked: () -> Unit,
+    onGallerySelected: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Spacer(modifier = Modifier.width(16.dp))
+        OutlinedButton(
+            modifier = Modifier
+                .size(72.dp),
+            shape = CircleShape,
+            onClick = {
+                onGallerySelected()
+            },
+            colors = ButtonDefaults.outlinedButtonColors().copy(
+                contentColor = MaterialTheme.colorScheme.secondary,
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+
+            ),
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondary),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Image,
+                contentDescription = "Navigate to Gallery",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(36.dp),
+            )
+        }
+        Spacer(modifier = Modifier.weight(0.5f))
+        OutlinedButton(
+            modifier = Modifier
+                .size(96.dp),
+            shape = CircleShape,
+            onClick = {
+                onImageCaptureClicked()
+            },
+            colors = ButtonDefaults.outlinedButtonColors().copy(
+                contentColor = MaterialTheme.colorScheme.secondary,
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+
+            ),
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondary),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Camera,
+                modifier = Modifier.size(36.dp),
+                contentDescription = "Capture Image",
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Spacer(modifier = Modifier.weight(0.5f))
+        DeviceSelectionControls(
+            modifier = Modifier,
+            availableCameraDevices = availableDevices,
+            onCameraDeviceSelected = onCameraSelected
+        )
+        Spacer(modifier = Modifier.width(16.dp))
     }
 }
 
@@ -187,6 +233,7 @@ fun DeviceSelectionControls(
         }
     }
 }
+
 
 @Composable
 fun FaceDetectionResultOverlay(
@@ -340,7 +387,6 @@ fun CameraPermissionsDisplay(
         )
         Spacer(modifier = Modifier.height(4.dp))
         if (permissionState.shouldShowRationale) {
-            // Display a message explaining why the user should allow the camera permission
             Text(
                 text = "Accessing the camera is required for Obscura's core functionality. Please grant the permission, when prompted.",
                 style = MaterialTheme.typography.bodyMedium,
