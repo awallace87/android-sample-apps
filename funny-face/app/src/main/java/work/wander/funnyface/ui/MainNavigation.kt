@@ -57,9 +57,11 @@ fun MainNavigation() {
                 })
         }
         composable<Gallery> {
-            val imageGalleryViewModel: ImageGalleryViewModel = hiltViewModel<ImageGalleryViewModel>()
+            val imageGalleryViewModel: ImageGalleryViewModel =
+                hiltViewModel<ImageGalleryViewModel>()
             val overlayImages = imageGalleryViewModel.overlayImages
-            ImageGalleryView(overlayImages = overlayImages)
+            ImageGalleryView(overlayImages = overlayImages,
+                onExportImageSelected = { imageGalleryViewModel.onExportImageSelected(it) })
         }
     }
 }
