@@ -1,14 +1,18 @@
 package work.wander.funnyface.ui.gallery
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -35,14 +39,18 @@ fun ImageGalleryView(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(top = 8.dp)
                 .align(Alignment.TopCenter)
         )
 
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.8f)
-                .align(Alignment.BottomCenter)
+                .fillMaxHeight(0.85f)
+                .align(Alignment.BottomCenter),
+            verticalArrangement = Arrangement.Top,
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             items(overlayImages.size) { index ->
                 val overlayImage = overlayImages[index]
@@ -78,14 +86,18 @@ fun ImageGalleryItem(
 
         OutlinedButton(
             onClick = onExportImageSelected,
-            modifier = Modifier.align(Alignment.BottomEnd)
+            shape = CircleShape,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .size(72.dp),
+            border = ButtonDefaults.outlinedButtonBorder().copy(width = 2.dp),
         ) {
             Icon(
                 imageVector = Icons.Outlined.Share,
                 contentDescription = "Export Image",
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(48.dp)
             )
-
         }
     }
 
